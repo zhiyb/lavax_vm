@@ -10,7 +10,7 @@ def op_str_size(data, ofs):
     return i + 1
 
 def op_str_data(d, ofs = 1):
-    return d[ofs:]
+    return f'"{d[ofs:].decode("GB2312")}"'
 
 def op_data_i16(d):
     return d[0] + (d[1] << 8) - (0x10000 if d[1] & 0x80 else 0)
@@ -34,9 +34,43 @@ op_decode = {
     0x04: ("push_vchar",
            lambda _, __: 1 + op_vaddr_size(),
            lambda d: f"*{op_vaddr(d[1:]):#x}"),
+    0x05: ("push_vint",
+           lambda _, __: 1 + op_vaddr_size(),
+           lambda d: f"*{op_vaddr(d[1:]):#x}"),
+    0x06: ("push_vlong",
+           lambda _, __: 1 + op_vaddr_size(),
+           lambda d: f"*{op_vaddr(d[1:]):#x}"),
+    0x07: ("push_gchar",
+           lambda _, __: 1 + op_vaddr_size(),
+           lambda d: f"*{op_vaddr(d[1:]):#x}"),
+    0x08: ("push_gint",
+           lambda _, __: 1 + op_vaddr_size(),
+           lambda d: f"*{op_vaddr(d[1:]):#x}"),
+    0x09: ("push_glong",
+           lambda _, __: 1 + op_vaddr_size(),
+           lambda d: f"*{op_vaddr(d[1:]):#x}"),
+    0x0a: ("push_achar",
+           lambda _, __: 1 + op_vaddr_size(),
+           lambda d: f"*{op_vaddr(d[1:]):#x}"),
     0x0d: ("push_string",
            lambda data, ofs: 1 + op_str_size(data, ofs + 1),
            lambda d: op_str_data(d, 1)),
+    0x17: ("push_along",
+           lambda _, __: 1 + op_vaddr_size(),
+           lambda d: f"*{op_vaddr(d[1:]):#x}"),
+    0x1f: ("cal_INC", 1),
+    0x20: ("cal_DEC", 1),
+    0x21: ("cal_add", 1),
+    0x22: ("cal_sub", 1),
+    0x27: ("cal_land", 1),
+    0x28: ("cal_lor", 1),
+    0x2a: ("cal_mul", 1),
+    0x2b: ("cal_div", 1),
+    0x2f: ("cal_equ", 1),
+    0x31: ("cal_le", 1),
+    0x32: ("cal_ge", 1),
+    0x33: ("cal_great", 1),
+    0x34: ("cal_less", 1),
     0x35: ("let", 1), #9, lambda d: f"{op_data_u32(d[1:5])}, {op_data_u32(d[5:9])}"),
     0x38: ("pop_val", 1),
     0x39: ("jmpe", 4, lambda d: f"{op_data_u24(d[1:4]):#x}"),
@@ -47,13 +81,32 @@ op_decode = {
     0x3e: ("add_bp",
            lambda _, __: 2 + op_vaddr_size(),
            lambda d: f"{op_vaddr(d[1:]):#x}, {d[1 + op_vaddr_size()]}"),
+    0x40: ("good_exit", 1),
     0x45: ("cal_qadd", 3, lambda d: op_data_i16(d[1:3])),
+    0x46: ("cal_qsub", 3, lambda d: op_data_i16(d[1:3])),
+    0x47: ("cal_qmul", 3, lambda d: op_data_i16(d[1:3])),
+    0x48: ("cal_qdiv", 3, lambda d: op_data_i16(d[1:3])),
+    0x4a: ("cal_qlshift", 3, lambda d: op_data_i16(d[1:3])),
+    0x4c: ("cal_qequ", 3, lambda d: op_data_i16(d[1:3])),
+    0x4d: ("cal_qneq", 3, lambda d: op_data_i16(d[1:3])),
+    0x4e: ("cal_qgreat", 3, lambda d: op_data_i16(d[1:3])),
     0x4f: ("cal_qless", 3, lambda d: op_data_i16(d[1:3])),
-    0x8b: ("c_block", 1),
+    0x81: ("getchar", 1),
+    0x84: ("strlen", 1),
+    0x87: ("delay", 1),
+    0x88: ("writeblock", 1),
+    0x89: ("scroll_to_lcd", 1),
+    0x8a: ("textout", 1),
+    0x8b: ("block", 1),
+    0x8c: ("rectangle", 1),
+    0x8d: ("exit", 1),
     0x8e: ("clearscreen", 1),
     0xae: ("fopen", 1),
     0xaf: ("fclose", 1),
     0xb0: ("fread", 1),
+    0xb1: ("fwrite", 1),
+    0xb8: ("sprintf", 1),
+    0xbc: ("checkkey", 1),
     0xcb: ("setgraphmode", 1),
     0xcc: ("setbgcolor", 1),
     0xcd: ("setfgcolor", 1),
@@ -98,6 +151,7 @@ op2_str = [
 def parse_op(data, ofs):
     op = data[ofs]
     size = 1
+
     if op in op_decode:
         op_info = op_decode[op]
         size = op_info[1]
@@ -111,7 +165,7 @@ def parse_op(data, ofs):
 
     else:
         op_name = op2_str[op & 0x7f] if op & 0x80 else op_str[op]
-        raise Exception(f"Unknown OP code: {op:02x} - {op_name}")
+        raise Exception(f"Unknown OP code at {ofs:#010x}: {op:#04x} - {op_name}")
 
     return size
 
