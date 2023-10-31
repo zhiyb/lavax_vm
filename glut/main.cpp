@@ -4,31 +4,60 @@
 #include <glm/glm.hpp>
 
 #include <iostream>
+#include <fstream>
 #include <stdexcept>
 #include <string>
+#include <vector>
 #include <cstdint>
+
+#include "lava.h"
 
 #define INIT_WINDOW_SCALE   4
 
-struct {
-    struct {
-        GLuint fb;
-    } texture;
-} gl_data;
+// Lava stuff
 
 struct {
     uint32_t w, h;
     uint8_t v[320*240];
 } framebuffer;
 
-void framebuffer_init()
+Lava lava;
+
+int lava_init(int argc, char *argv[])
 {
+    if (argc != 2)
+        return 1;
+
+    std::ifstream flava;
+    flava.open(argv[1], std::ios::binary | std::ios::in);
+    if (!flava)
+        return 1;
+
+    std::vector<uint8_t> fdata(1 * 1024 * 1024);
+    fdata.resize(flava.rdbuf()->sgetn(reinterpret_cast<char *>(fdata.data()), fdata.size()));
+    //fdata.resize(flava.readsome(fdata.data(), fdata.size()));
+    std::cout << "Read " << fdata.size() << " bytes" << std::endl;
+    if (!lava.load(fdata)) {
+        std::cerr << "Error: " << lava.getErrorMsg() << std::endl;
+        return 1;
+    }
+
     framebuffer.w = 320;
     framebuffer.h = 240;
     uint8_t i = 0;
     for (auto &c: framebuffer.v)
         c = i++;
+
+    return 0;
 }
+
+// OpenGL stuff
+
+struct {
+    struct {
+        GLuint fb;
+    } texture;
+} gl_data;
 
 std::string gl_get_shader_info_log(GLuint shader)
 {
@@ -121,10 +150,10 @@ void main()
     glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, sizeof(glm::vec2), 0);
     glEnableVertexAttribArray(0);
 
-    // Texture sampler
+    // Texture and sampler
     glGenTextures(1, &gl_data.texture.fb);
     glBindTexture(GL_TEXTURE_2D, gl_data.texture.fb);
-    glTextureStorage2D(gl_data.texture.fb, 1, GL_R8, framebuffer.w, framebuffer.h);
+    glTextureStorage2D(gl_data.texture.fb, 1, GL_R8, lava.getFramebufferWidth(), lava.getFramebufferHeight());
 
     const size_t nsamplers = 1;
     GLuint sampler[nsamplers];
@@ -141,8 +170,8 @@ void main()
 void gl_display()
 {
     glTextureSubImage2D(gl_data.texture.fb, 0,
-                        0, 0, framebuffer.w, framebuffer.h,
-                        GL_RED, GL_UNSIGNED_BYTE, framebuffer.v);
+                        0, 0, lava.getFramebufferWidth(), lava.getFramebufferHeight(),
+                        GL_RED, GL_UNSIGNED_BYTE, lava.getFramebuffer());
     glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
     glutSwapBuffers();
 }
@@ -154,7 +183,9 @@ void gl_reshape(int width, int height)
 
 int main(int argc, char *argv[])
 {
-    framebuffer_init();
+    int e = lava_init(argc, argv);
+    if (e != 0)
+        return e;
 
     glutInit(&argc, argv);
     glutInitContextVersion(4, 0);
