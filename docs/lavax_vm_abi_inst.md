@@ -221,30 +221,30 @@ If bit 7 == 0, continue without delay for 1000 times, for debugging?
 | Offset | Type | Name | Description |
 |---|---|---|---|
 | 0x00 | u8 | opcode | 0x01 |
-| 0x01 | u8 | data0 | Data |
+| +1 | u8 | dp0 | Data |
 
 Stack push:
 
 | Type | Name | Description |
 |---|---|---|
-| u32 | data0 | Data |
+| u8 | dp0 | Data |
 
-Push unsigned `data0` onto stack.
+Push `u8` type `dp0` onto stack.
 
 ## push_int
 
 | Offset | Type | Name | Description |
 |---|---|---|---|
 | 0x00 | u8 | opcode | 0x02 |
-| 0x01-0x02 | i16 | data0 | Data |
+| +2 | i16 | dp0 | Data |
 
 Stack push:
 
 | Type | Name | Description |
 |---|---|---|
-| i32 | data0 | Data |
+| i16 | dp0 | Data |
 
-Push signed `data0` onto stack.
+Push `i16` type `dp0` onto stack.
 
 ## push_long
 
@@ -276,21 +276,6 @@ Stack push:
 
 Push `u8` type `ds0` at `*ptr0` onto stack.
 
-## push_vlong
-
-| Offset | Type | Name | Description |
-|---|---|---|---|
-| 0x00 | u8 | opcode | 0x04 |
-| +2/+3 | addr | ptr0 | RAM pointer |
-
-Stack push:
-
-| Type | Name | Description |
-|---|---|---|
-| i32 | ds0 | Data |
-
-Push `i32` type `ds0` at `*ptr0` onto stack.
-
 ## push_vint
 
 | Offset | Type | Name | Description |
@@ -306,6 +291,21 @@ Stack push:
 
 Push `i16` type `ds0` at `*ptr0` onto stack.
 
+## push_vlong
+
+| Offset | Type | Name | Description |
+|---|---|---|---|
+| 0x00 | u8 | opcode | 0x06 |
+| +2/+3 | addr | ptr0 | RAM pointer |
+
+Stack push:
+
+| Type | Name | Description |
+|---|---|---|
+| i32 | ds0 | Data |
+
+Push `i32` type `ds0` at `*ptr0` onto stack.
+
 ## push_gchar
 
 | Offset | Type | Name | Description |
@@ -313,47 +313,61 @@ Push `i16` type `ds0` at `*ptr0` onto stack.
 | 0x00 | u8 | opcode | 0x07 |
 | +2/+3 | addr | ptr0 | RAM pointer |
 
+Stack pop:
+
+| Type | Name | Description |
+|---|---|---|
+| addr | offset | Address offset |
+
 Stack push:
 
 | Type | Name | Description |
 |---|---|---|
-| u32 | data0 | Data |
+| u8 | ds0 | Data |
 
-TODO WHAT IS THIS
-
-```c
-a32 get_gaddr()
-{
-	a32 t;
-	t=getcode();
-	t+=getcode()<<8;
-	if (RamBits>16) t+=getcode()<<16;
-	eval_top-=4;
-	t+=lRam[eval_stack+eval_top]+(lRam[eval_stack+eval_top+1]<<8);
-	if (RamBits>16) t+=lRam[eval_stack+eval_top+2]<<16;
-	return t;
-}
-
-void push_gchar()
-{
-	lRam[eval_stack+eval_top++]=lRamRead(get_gaddr());
-	lRam[eval_stack+eval_top++]=0;
-	lRam[eval_stack+eval_top++]=0;
-	lRam[eval_stack+eval_top++]=0;
-}
-```
+Push `u8` type `ds0` at `*(ptr0 + offset)` onto stack.
 
 ## push_gint
 
-    0x08: ("push_gint",
-           lambda _, __: 1 + op_vaddr_size(),
-           lambda d: f"*{op_vaddr(d[1:]):#x}"),
+| Offset | Type | Name | Description |
+|---|---|---|---|
+| 0x00 | u8 | opcode | 0x08 |
+| +2/+3 | addr | ptr0 | RAM pointer |
+
+Stack pop:
+
+| Type | Name | Description |
+|---|---|---|
+| addr | offset | Address offset |
+
+Stack push:
+
+| Type | Name | Description |
+|---|---|---|
+| i16 | ds0 | Data |
+
+Push `i16` type `ds0` at `*(ptr0 + offset)` onto stack.
 
 ## push_glong
 
-    0x09: ("push_glong",
-           lambda _, __: 1 + op_vaddr_size(),
-           lambda d: f"*{op_vaddr(d[1:]):#x}"),
+| Offset | Type | Name | Description |
+|---|---|---|---|
+| 0x00 | u8 | opcode | 0x09 |
+| +2/+3 | addr | ptr0 | RAM pointer |
+
+Stack pop:
+
+| Type | Name | Description |
+|---|---|---|
+| addr | offset | Address offset |
+
+Stack push:
+
+| Type | Name | Description |
+|---|---|---|
+| i32 | ds0 | Data |
+
+Push `i32` type `ds0` at `*(ptr0 + offset)` onto stack.
 
 ## push_achar
 
@@ -362,33 +376,26 @@ void push_gchar()
 | 0x00 | u8 | opcode | 0x0a |
 | +2/+3 | addr | ptr0 | RAM pointer |
 
-```c
-a32 get_gaddr()
-{
-	a32 t;
-	t=getcode();
-	t+=getcode()<<8;
-	if (RamBits>16) t+=getcode()<<16;
-	eval_top-=4;
-	t+=lRam[eval_stack+eval_top]+(lRam[eval_stack+eval_top+1]<<8);
-	if (RamBits>16) t+=lRam[eval_stack+eval_top+2]<<16;
-	return t;
-}
+Stack pop:
 
-void push_achar()
-{
-	a32 t;
-	t=get_gaddr();
-	lRam[eval_stack+eval_top++]=(byte)(t&0xff);
-	lRam[eval_stack+eval_top++]=(byte)((t>>8)&0xff);
-	if (RamBits>16) {
-		lRam[eval_stack+eval_top++]=(byte)((t>>16)&0xff);
-		lRam[eval_stack+eval_top++]=1;
-	} else {
-		lRam[eval_stack+eval_top++]=1;
-		lRam[eval_stack+eval_top++]=0;
-	}
-}
+| Type | Name | Description |
+|---|---|---|
+| addr | offset | Address offset |
+
+Stack push:
+
+| Type | Name | Description |
+|---|---|---|
+| addr_u8 | v_addr | Data |
+
+Push size-included address `v_addr` with value `ptr0 + offset` onto stack.\
+For `*u8` type address, set higher byte to 1.
+
+```python
+if RamBits <= 16:
+	v_addr = 0x00010000 | (ptr0 + offset)
+else:
+	v_addr = 0x01000000 | (ptr0 + offset)
 ```
 
 ## push_string
@@ -423,31 +430,23 @@ Push decoded string data onto string stack, including terminator 0.
 | 0x00 | u8 | opcode | 0x17 |
 | +2/+3 | addr | ptr0 | RAM pointer |
 
-```c
-a32 get_gaddr()
-{
-	a32 t;
-	t=getcode();
-	t+=getcode()<<8;
-	if (RamBits>16) t+=getcode()<<16;
-	eval_top-=4;
-	t+=lRam[eval_stack+eval_top]+(lRam[eval_stack+eval_top+1]<<8);
-	if (RamBits>16) t+=lRam[eval_stack+eval_top+2]<<16;
-	return t;
-}
+Stack pop:
 
-void push_along()
-{
-	a32 t;
-	t=get_gaddr();
-	lRam[eval_stack+eval_top++]=(byte)(t&0xff);
-	lRam[eval_stack+eval_top++]=(byte)((t>>8)&0xff);
-	if (RamBits>16)
-		lRam[eval_stack+eval_top++]=(byte)((t>>16)&0xff);
-	else
-		lRam[eval_stack+eval_top++]=0;
-	lRam[eval_stack+eval_top++]=0;
-}
+| Type | Name | Description |
+|---|---|---|
+| addr | offset | Address offset |
+
+Stack push:
+
+| Type | Name | Description |
+|---|---|---|
+| addr_i32 | v_addr | Data |
+
+Push size-included address `v_addr` with value `ptr0 + offset` onto stack.\
+For `*i32` type address, set higher byte to 0.
+
+```python
+v_addr = ptr0 + offset
 ```
 
 ## cal_INC
@@ -456,17 +455,18 @@ void push_along()
 |---|---|---|---|
 | 0x00 | u8 | opcode | 0x1f |
 
-```c
-void get_val2()
-{
-	eval_top-=4;
-	a3=*(long *)(lRam+eval_stack+eval_top);
-}
+Stack pop:
 
+| Type | Name | Description |
+|---|---|---|
+| i32 | ds0 | Stack data 0 (a3) |
+
+```c
 void inc_dec_com()
 {
 	long t;
-	get_val2();
+	a3 = ds0;
+
 	if (RamBits>16) {
 		t=(a3>>24)&0x7f;
 		if (a3&0x80000000) a3+=local_bp; //???有可能越界，但也可以不检验
@@ -945,8 +945,8 @@ Set stack pointer to `addr0`.
 | Offset | Type | Name | Description |
 |---|---|---|---|
 | 0x00 | u8 | opcode | 0x3e |
-| +2/+3 | addr | addr0 | Pointer address |
-| +1 | u8 | data0 | Data |
+| +2/+3 | addr | offset | Address offset |
+| +1 | u8 | count | Data |
 
 TODO WHAT IS THIS
 
@@ -954,24 +954,20 @@ TODO WHAT IS THIS
 
 void add_bp()
 {
-	long t;
-	byte t2;
-	int i;
-	t=local_bp;
-	local_bp=local_sp;
+	i32 t = local_bp;
+	local_bp = local_sp;
+
 	lRamWrite(local_bp+3,(byte)(t&0xff));
 	lRamWrite(local_bp+4,(byte)((t>>8)&0xff));
 	if (RamBits>16) lRamWrite(local_bp+5,(byte)((t>>16)&0xff));
-	t=getcode();
-	t+=getcode()<<8;
-	if (RamBits>16) t+=getcode()<<16;
-	local_sp=local_bp+(t&0xffffff);
-	//if (local_sp&3) local_sp+=4-(local_sp&3); //令堆栈开始于4字节边界
-	t=getcode()*4;
+
+	! local_sp = local_sp + offset;
+	! t = count * 4;
+
 	if (t) {
-		eval_top-=(word)t;
-		t2=eval_top;
-		i=0;
+		eval_top -= t;
+		u8 t2 = eval_top;
+		int i = 0;
 		if (RamBits==32) {
 			while (t) {
 				lRamWrite(local_bp+8+i++,lRam[eval_stack+t2++]);
@@ -1244,17 +1240,20 @@ void c_getchar()
 |---|---|---|---|
 | 0x00 | u8 | opcode | 0x84 |
 
-```c
-void c_strlen()
-{
-	a32 t;
-	get_val();
-	if (RamBits>16) t=a1&0xffffff;
-	else t=(word)a1;
-	for (a1=0;;a1++) if (lRamRead(t+a1)==0) break;
-	put_val();
-}
-```
+Stack pop:
+
+| Type | Name | Description |
+|---|---|---|
+| addr | sptr | String pointer |
+
+Stack push:
+
+| Type | Name | Description |
+|---|---|---|
+| i32 | ret | Return data |
+
+Calculate 0-terminated string length at `*sptr`.\
+Push string length excluding 0-terminator to `ret`.
 
 ## c_delay
 
@@ -1266,17 +1265,9 @@ Stack pop:
 
 | Type | Name | Description |
 |---|---|---|
-| u32 | delay | Delay time |
+| u16 | delay | Delay time |
 
-```c
-void c_delay()
-{
-	get_val();
-	delay=(a1&0x7fff)*256/1000;
-	_asm rdtsc
-	_asm mov timed,eax
-}
-```
+Delay for `delay` ms, maximum `0x7fff (32767)` ms.
 
 ## c_writeblock
 

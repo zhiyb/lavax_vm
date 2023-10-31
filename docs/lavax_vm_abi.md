@@ -59,6 +59,11 @@ This limits pointer value.
 
 (V)RAM size 0x1000000 / 16MiB.
 
+Harvard architecture: Separate instrcution & data memory.
+
+Instruction memory address pointer size: `u24`.\
+Data memory address pointer size: `u16` or `u24`.
+
 Little-endianness.
 
 Text buffer offset `0x1400`.
