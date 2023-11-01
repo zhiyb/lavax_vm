@@ -2,6 +2,7 @@
 
 Lava::Lava()
 {
+    proc.setDisp(&disp);
 }
 
 bool Lava::load(const std::vector<uint8_t> &source)

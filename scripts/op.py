@@ -1,76 +1,76 @@
 #!/usr/bin/env python3
 
-PARAM_NONE  = 0x00   # 0 bytes
-PARAM_U8    = 0x01   # 1 byte
-PARAM_I16   = 0x02   # 2 bytes
-PARAM_I32   = 0x03   # 4 bytes
-PARAM_STR   = 0x04   # variable
-PARAM_ADDR  = 0x05   # 2 or 3 bytes
-PARAM_ADDRD = 0x06   # 3 or 4 bytes
-PARAM_JMP   = 0x07   # 3 bytes
+PARAM_NONE    = 0x00   # 0 bytes
+PARAM_U8      = 0x01   # 1 byte
+PARAM_I16     = 0x02   # 2 bytes
+PARAM_I32     = 0x03   # 4 bytes
+PARAM_STR     = 0x04   # variable
+PARAM_ADDR    = 0x05   # 2 or 3 bytes
+PARAM_ADDR_U8 = 0x06   # 3 or 4 bytes
+PARAM_JMP     = 0x07   # 3 bytes
 
 op = {
     # OP:  Name,         params,     pop, push
-    0x01: ("push_u8",      PARAM_U8,    0, 1),
-    0x02: ("push_i16",     PARAM_I16,   0, 1),
-    0x03: ("push_i32",     PARAM_I32,   0, 1),
-    0x04: ("pushv_u8",     PARAM_ADDR,  0, 1),
-    0x05: ("pushv_i16",    PARAM_ADDR,  0, 1),
-    0x06: ("pushv_i32",    PARAM_ADDR,  0, 1),
-    0x07: ("pushg_u8",     PARAM_ADDR,  1, 1),
-    0x08: ("pushg_i16",    PARAM_ADDR,  1, 1),
-    0x09: ("pushg_i32",    PARAM_ADDR,  1, 1),
-    0x0a: ("pusha_u8",     PARAM_ADDR,  1, 1),
-    0x0d: ("push_str",     PARAM_STR,   0, 1),
-    0x17: ("pusha_i32",    PARAM_ADDR,  1, 1),
-    0x1f: ("INC",          PARAM_NONE,  1, 0),
-    0x20: ("DEC",          PARAM_NONE,  1, 0),
-    0x21: ("add",          PARAM_NONE,  2, 1),
-    0x22: ("sub",          PARAM_NONE,  2, 1),
-    0x27: ("land",         PARAM_NONE,  2, 1),
-    0x28: ("lor",          PARAM_NONE,  2, 1),
-    0x2a: ("mul",          PARAM_NONE,  2, 1),
-    0x2b: ("div",          PARAM_NONE,  2, 1),
-    0x2f: ("equ",          PARAM_NONE,  2, 1),
-    0x31: ("le",           PARAM_NONE,  2, 1),
-    0x32: ("ge",           PARAM_NONE,  2, 1),
-    0x33: ("great",        PARAM_NONE,  2, 1),
-    0x34: ("less",         PARAM_NONE,  2, 1),
-    0x35: ("let",          PARAM_NONE,  2, 1),
-    0x38: ("pop",          PARAM_NONE,  1, 0),
-    0x39: ("jmpe",         PARAM_JMP,   0, 0),
-    0x3b: ("jmp",          PARAM_JMP,   0, 0),
-    0x3c: ("set_sp",       PARAM_ADDR,  0, 0),
-    0x3e: ("add_bp",       PARAM_ADDRD, 0, 0),
-    0x40: ("quit",         PARAM_NONE,  0, 0),
-    0x45: ("qadd",         PARAM_I16,   1, 1),
-    0x46: ("qsub",         PARAM_I16,   1, 1),
-    0x47: ("qmul",         PARAM_I16,   1, 1),
-    0x48: ("qdiv",         PARAM_I16,   1, 1),
-    0x4a: ("qlshift",      PARAM_I16,   1, 1),
-    0x4c: ("qequ",         PARAM_I16,   1, 1),
-    0x4d: ("qneq",         PARAM_I16,   1, 1),
-    0x4e: ("qgreat",       PARAM_I16,   1, 1),
-    0x4f: ("qless",        PARAM_I16,   1, 1),
-    0x81: ("getchar",      PARAM_NONE,  0, 0),
-    0x84: ("strlen",       PARAM_NONE,  1, 1),
-    0x87: ("delay",        PARAM_NONE,  1, 0),
-    0x88: ("writeblock",   PARAM_NONE,  0, 0),
-    0x89: ("scroll",       PARAM_NONE,  0, 0),
-    0x8a: ("textout",      PARAM_NONE,  0, 0),
-    0x8b: ("block",        PARAM_NONE,  0, 0),
-    0x8c: ("rectangle",    PARAM_NONE,  0, 0),
-    0x8d: ("exit",         PARAM_NONE,  1, 0),
-    0x8e: ("clearscreen",  PARAM_NONE,  0, 0),
-    0xae: ("fopen",        PARAM_NONE,  2, 1),
-    0xaf: ("fclose",       PARAM_NONE,  1, 0),
-    0xb0: ("fread",        PARAM_NONE,  0, 0),
-    0xb1: ("fwrite",       PARAM_NONE,  0, 0),
-    0xb8: ("sprintf",      PARAM_NONE,  0, 0),
-    0xbc: ("checkkey",     PARAM_NONE,  0, 0),
-    0xcb: ("setgraphmode", PARAM_NONE,  1, 1),
-    0xcc: ("setbgcolor",   PARAM_NONE,  1, 0),
-    0xcd: ("setfgcolor",   PARAM_NONE,  1, 0),
+    0x01: ("push_u8",      PARAM_U8,      0, 1),
+    0x02: ("push_i16",     PARAM_I16,     0, 1),
+    0x03: ("push_i32",     PARAM_I32,     0, 1),
+    0x04: ("pushv_u8",     PARAM_ADDR,    0, 1),
+    0x05: ("pushv_i16",    PARAM_ADDR,    0, 1),
+    0x06: ("pushv_i32",    PARAM_ADDR,    0, 1),
+    0x07: ("pushg_u8",     PARAM_ADDR,    1, 1),
+    0x08: ("pushg_i16",    PARAM_ADDR,    1, 1),
+    0x09: ("pushg_i32",    PARAM_ADDR,    1, 1),
+    0x0a: ("pusha_u8",     PARAM_ADDR,    1, 1),
+    0x0d: ("push_str",     PARAM_STR,     0, 1),
+    0x17: ("pusha_i32",    PARAM_ADDR,    1, 1),
+    0x1f: ("INC",          PARAM_NONE,    1, 0),
+    0x20: ("DEC",          PARAM_NONE,    1, 0),
+    0x21: ("add",          PARAM_NONE,    2, 1),
+    0x22: ("sub",          PARAM_NONE,    2, 1),
+    0x27: ("land",         PARAM_NONE,    2, 1),
+    0x28: ("lor",          PARAM_NONE,    2, 1),
+    0x2a: ("mul",          PARAM_NONE,    2, 1),
+    0x2b: ("div",          PARAM_NONE,    2, 1),
+    0x2f: ("equ",          PARAM_NONE,    2, 1),
+    0x31: ("le",           PARAM_NONE,    2, 1),
+    0x32: ("ge",           PARAM_NONE,    2, 1),
+    0x33: ("great",        PARAM_NONE,    2, 1),
+    0x34: ("less",         PARAM_NONE,    2, 1),
+    0x35: ("let",          PARAM_NONE,    2, 1),
+    0x38: ("pop",          PARAM_NONE,    1, 0),
+    0x39: ("jmpe",         PARAM_JMP,     0, 0),
+    0x3b: ("jmp",          PARAM_JMP,     0, 0),
+    0x3c: ("set_sp",       PARAM_ADDR,    0, 0),
+    0x3e: ("add_bp",       PARAM_ADDR_U8, 0, 0),
+    0x40: ("quit",         PARAM_NONE,    0, 0),
+    0x45: ("qadd",         PARAM_I16,     1, 1),
+    0x46: ("qsub",         PARAM_I16,     1, 1),
+    0x47: ("qmul",         PARAM_I16,     1, 1),
+    0x48: ("qdiv",         PARAM_I16,     1, 1),
+    0x4a: ("qlshift",      PARAM_I16,     1, 1),
+    0x4c: ("qequ",         PARAM_I16,     1, 1),
+    0x4d: ("qneq",         PARAM_I16,     1, 1),
+    0x4e: ("qgreat",       PARAM_I16,     1, 1),
+    0x4f: ("qless",        PARAM_I16,     1, 1),
+    0x81: ("getchar",      PARAM_NONE,    0, 0),
+    0x84: ("strlen",       PARAM_NONE,    1, 1),
+    0x87: ("delay",        PARAM_NONE,    1, 0),
+    0x88: ("writeblock",   PARAM_NONE,    0, 0),
+    0x89: ("scroll",       PARAM_NONE,    0, 0),
+    0x8a: ("textout",      PARAM_NONE,    0, 0),
+    0x8b: ("block",        PARAM_NONE,    0, 0),
+    0x8c: ("rectangle",    PARAM_NONE,    0, 0),
+    0x8d: ("exit",         PARAM_NONE,    1, 0),
+    0x8e: ("clearscreen",  PARAM_NONE,    0, 0),
+    0xae: ("fopen",        PARAM_NONE,    2, 1),
+    0xaf: ("fclose",       PARAM_NONE,    1, 0),
+    0xb0: ("fread",        PARAM_NONE,    0, 0),
+    0xb1: ("fwrite",       PARAM_NONE,    0, 0),
+    0xb8: ("sprintf",      PARAM_NONE,    0, 0),
+    0xbc: ("checkkey",     PARAM_NONE,    0, 0),
+    0xcb: ("setgraphmode", PARAM_NONE,    1, 1),
+    0xcc: ("setbgcolor",   PARAM_NONE,    1, 0),
+    0xcd: ("setfgcolor",   PARAM_NONE,    1, 0),
 }
 
 
@@ -132,14 +132,14 @@ def op_addrd_size(data, ofs, rambits):
     return 4 if rambits > 16 else 3
 
 op_psize = {
-    PARAM_NONE:  0,
-    PARAM_U8:    1,
-    PARAM_I16:   2,
-    PARAM_I32:   4,
-    PARAM_STR:   op_str_size,
-    PARAM_ADDR:  op_addr_size,
-    PARAM_ADDRD: op_addrd_size,
-    PARAM_JMP:   3,
+    PARAM_NONE:    0,
+    PARAM_U8:      1,
+    PARAM_I16:     2,
+    PARAM_I32:     4,
+    PARAM_STR:     op_str_size,
+    PARAM_ADDR:    op_addr_size,
+    PARAM_ADDR_U8: op_addrd_size,
+    PARAM_JMP:     3,
 }
 
 def op_vaddr(d, ram_size):
@@ -149,12 +149,12 @@ def op_vaddr_size(ram_size):
     return 3 if ram_size > 16 else 2
 
 op_pdata = {
-    PARAM_NONE:  lambda d, ram_size: "",
-    PARAM_U8:    lambda d, ram_size: f"{d[0]:#x}",
-    PARAM_I16:   lambda d, ram_size: f"{d[0] + (d[1] << 8) - (0x10000 if d[1] & 0x80 else 0):#x}",
-    PARAM_I32:   lambda d, ram_size: f"{d[0] + (d[1] << 8) + (d[2] << 16) + (d[3] << 24) - (0x100000000 if d[3] & 0x80 else 0):#x}",
-    PARAM_STR:   lambda d, ram_size: f'"{d.decode("GB2312")}"',
-    PARAM_ADDR:  lambda d, ram_size: f"{op_vaddr(d, ram_size):#x}",
-    PARAM_ADDRD: lambda d, ram_size: f"{op_vaddr(d, ram_size):#x}, {d[op_vaddr_size(ram_size)]}",
-    PARAM_JMP:   lambda d, ram_size: f"{d[0] + (d[1] << 8) + (d[2] << 16):#x}",
+    PARAM_NONE:    lambda d, ram_size: "",
+    PARAM_U8:      lambda d, ram_size: f"{d[0]:#x}",
+    PARAM_I16:     lambda d, ram_size: f"{d[0] + (d[1] << 8) - (0x10000 if d[1] & 0x80 else 0):#x}",
+    PARAM_I32:     lambda d, ram_size: f"{d[0] + (d[1] << 8) + (d[2] << 16) + (d[3] << 24) - (0x100000000 if d[3] & 0x80 else 0):#x}",
+    PARAM_STR:     lambda d, ram_size: f'"{d.decode("GB2312")}"',
+    PARAM_ADDR:    lambda d, ram_size: f"{op_vaddr(d, ram_size):#x}",
+    PARAM_ADDR_U8: lambda d, ram_size: f"{op_vaddr(d, ram_size):#x}, {d[op_vaddr_size(ram_size)]}",
+    PARAM_JMP:     lambda d, ram_size: f"{d[0] + (d[1] << 8) + (d[2] << 16):#x}",
 }

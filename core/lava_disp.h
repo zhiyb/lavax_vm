@@ -17,7 +17,8 @@ public:
     };
 
     void setSize(uint32_t w, uint32_t h) {width = w; height = h;}
-    void setMode(LavaDisp::mode_t mode) {graphic_mode = mode;}
+    void setMode(mode_t mode) {graphic_mode = mode;}
+    mode_t getMode() {return graphic_mode;}
 
 #if LAVA_DOUBLE_BUFFER
     uint8_t *getFramebuffer() {return &framebuffer[fb_disp][0][0];}

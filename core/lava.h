@@ -10,6 +10,11 @@
 class Lava
 {
 public:
+    enum bool_t {
+        True  = 0xffffffff,
+        False = 0x00000000,
+    };
+
     Lava();
 
     bool load(const std::vector<uint8_t> &source);
