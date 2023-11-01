@@ -13,7 +13,7 @@ public:
     bool load(const std::vector<uint8_t> &source, uint32_t rambits, bool pen_input);
 
 private:
-    std::vector<uint8_t> exec;
+    std::vector<uint8_t> source;
 
     uint32_t rambits;
     bool pen_input;

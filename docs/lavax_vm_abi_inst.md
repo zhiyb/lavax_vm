@@ -588,7 +588,7 @@ void cal_DEC()
 |---|---|---|---|
 | 0x00 | u8 | opcode | 0x21 |
 
-Stack pull:
+Stack pop:
 
 | Type | Name | Description |
 |---|---|---|
@@ -611,7 +611,7 @@ ret = ds1 + ds0
 |---|---|---|---|
 | 0x00 | u8 | opcode | 0x22 |
 
-Stack pull:
+Stack pop:
 
 | Type | Name | Description |
 |---|---|---|
@@ -634,7 +634,7 @@ ret = ds1 - ds0
 |---|---|---|---|
 | 0x00 | u8 | opcode | 0x27 |
 
-Stack pull:
+Stack pop:
 
 | Type | Name | Description |
 |---|---|---|
