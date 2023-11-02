@@ -19,11 +19,16 @@ public:
 
     bool load(const std::vector<uint8_t> &source);
 
+    LavaProc::proc_req_t run() {return proc.run();}
+
+    const std::vector<uint8_t> &inspectRam() {return proc.inspectRam();}
+
 #if LAVA_DOUBLE_BUFFER
     uint8_t *getFramebuffer() {return disp.getFramebuffer();}
 #endif
-    uint32_t getFramebufferWidth() {return disp.getFramebufferWidth();}
-    uint32_t getFramebufferHeight() {return disp.getFramebufferHeight();}
+    uint16_t getFramebufferWidth() {return disp.getFramebufferWidth();}
+    uint16_t getFramebufferHeight() {return disp.getFramebufferHeight();}
+    uint16_t getFramebufferStride() {return disp.getFramebufferStride();}
 
     const std::string &getErrorMsg() {return serror;}
 

@@ -12,14 +12,13 @@
 
 #include "lava.h"
 
-#define INIT_WINDOW_SCALE   4
+struct {
+    struct {
+        GLuint fb;
+    } texture;
+} gl_data;
 
 // Lava stuff
-
-struct {
-    uint32_t w, h;
-    uint8_t v[320*240];
-} framebuffer;
 
 Lava lava;
 
@@ -35,29 +34,53 @@ int lava_init(int argc, char *argv[])
 
     std::vector<uint8_t> fdata(1 * 1024 * 1024);
     fdata.resize(flava.rdbuf()->sgetn(reinterpret_cast<char *>(fdata.data()), fdata.size()));
-    //fdata.resize(flava.readsome(fdata.data(), fdata.size()));
     std::cout << "Read " << fdata.size() << " bytes" << std::endl;
     if (!lava.load(fdata)) {
         std::cerr << "Error: " << lava.getErrorMsg() << std::endl;
         return 1;
     }
 
-    framebuffer.w = 320;
-    framebuffer.h = 240;
-    uint8_t i = 0;
-    for (auto &c: framebuffer.v)
-        c = i++;
-
     return 0;
 }
 
-// OpenGL stuff
+void gl_idle()
+{
+    static bool lava_run = true;
+    try {
+        LavaProc::proc_req_t req = LavaProc::ReqNone;
+        if (lava_run)
+            req = lava.run();
 
-struct {
-    struct {
-        GLuint fb;
-    } texture;
-} gl_data;
+        if (req & LavaProc::ReqRefresh) {
+            glTextureSubImage2D(gl_data.texture.fb, 0,
+                                0, 0, lava.getFramebufferWidth(), lava.getFramebufferHeight(),
+                                GL_RED, GL_UNSIGNED_BYTE, lava.getFramebuffer());
+            glutPostRedisplay();
+        }
+
+    } catch (const std::exception &e) {
+        std::cerr << e.what() << std::endl;
+
+        auto const &ram = lava.inspectRam();
+        std::ofstream f_ram_dump;
+        f_ram_dump.open("ram.bin", std::ios::binary | std::ios::out);
+        f_ram_dump.write(reinterpret_cast<const char *>(ram.data()), ram.size());
+        f_ram_dump.close();
+        std::cerr << "RAM dump: ram.bin" << std::endl;
+
+        auto fb = lava.getFramebuffer();
+        std::ofstream f_fb_dump;
+        f_fb_dump.open("fb.bin", std::ios::binary | std::ios::out);
+        f_fb_dump.write(reinterpret_cast<const char *>(fb),
+                        LAVA_MAX_HEIGHT * LAVA_MAX_WIDTH);
+        f_fb_dump.close();
+        std::cerr << "FB dump: fb.bin" << std::endl;
+
+        lava_run = false;
+    }
+}
+
+// OpenGL stuff
 
 std::string gl_get_shader_info_log(GLuint shader)
 {
@@ -115,7 +138,9 @@ out vec4 colour;
 
 void main()
 {
-    colour = vec4(texture(tex, vMap).r, 0., 0., 1.);
+    float v = texture(tex, vMap).r;
+    v = v * 40.;
+    colour = vec4(v, v, v, 1.);
 }
     )"));
 
@@ -138,10 +163,10 @@ void main()
     glGenBuffers(nbuffers, buffer);
 
     glm::vec2 vertex[4] = {
-        glm::vec2(0, 0),
-        glm::vec2(0, 1),
-        glm::vec2(1, 0),
-        glm::vec2(1, 1),
+        glm::vec2(0., 0.),
+        glm::vec2(0., 1.),
+        glm::vec2(1., 0.),
+        glm::vec2(1., 1.),
     };
 
     glNamedBufferData(buffer[0], sizeof(vertex), vertex, GL_STATIC_DRAW);
@@ -154,6 +179,10 @@ void main()
     glGenTextures(1, &gl_data.texture.fb);
     glBindTexture(GL_TEXTURE_2D, gl_data.texture.fb);
     glTextureStorage2D(gl_data.texture.fb, 1, GL_R8, lava.getFramebufferWidth(), lava.getFramebufferHeight());
+    glPixelStorei(GL_UNPACK_ROW_LENGTH, lava.getFramebufferStride());
+    glTextureSubImage2D(gl_data.texture.fb, 0,
+                        0, 0, lava.getFramebufferWidth(), lava.getFramebufferHeight(),
+                        GL_RED, GL_UNSIGNED_BYTE, lava.getFramebuffer());
 
     const size_t nsamplers = 1;
     GLuint sampler[nsamplers];
@@ -169,9 +198,6 @@ void main()
 
 void gl_display()
 {
-    glTextureSubImage2D(gl_data.texture.fb, 0,
-                        0, 0, lava.getFramebufferWidth(), lava.getFramebufferHeight(),
-                        GL_RED, GL_UNSIGNED_BYTE, lava.getFramebuffer());
     glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
     glutSwapBuffers();
 }
@@ -191,11 +217,18 @@ int main(int argc, char *argv[])
     glutInitContextVersion(4, 0);
     glutInitContextProfile(GLUT_CORE_PROFILE);
     glutInitDisplayMode(GLUT_DOUBLE | GLUT_DEPTH | GLUT_RGBA);
-    glutInitWindowSize(framebuffer.w * INIT_WINDOW_SCALE, framebuffer.h * INIT_WINDOW_SCALE);
+
+    uint32_t scnw = glutGet(GLUT_SCREEN_WIDTH);
+    uint32_t scnh = glutGet(GLUT_SCREEN_HEIGHT);
+    uint32_t w = lava.getFramebufferWidth();
+    uint32_t h = lava.getFramebufferHeight();
+    uint32_t s = std::max(1u, std::min(scnw / w, scnh / h) / 2u);
+    glutInitWindowSize(w * s, h * s);
 
     int window = glutCreateWindow("lava_glut");
     glutDisplayFunc(&gl_display);
     glutReshapeFunc(&gl_reshape);
+    glutIdleFunc(&gl_idle);
 
     GLenum glew_err = glewInit();
     if (glew_err != GLEW_OK) {
