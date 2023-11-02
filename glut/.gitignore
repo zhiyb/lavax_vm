@@ -3,4 +3,5 @@
 *.exe
 *.o
 *.bin
+*.log
 *.sh

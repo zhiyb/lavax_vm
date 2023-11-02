@@ -402,8 +402,11 @@ void LavaProc::lava_wrap_scroll(const std::vector<uint8_t> &data)
 
 void LavaProc::lava_wrap_textout(const std::vector<uint8_t> &data)
 {
-
-    lava_op_textout();
+    uint32_t ds0 = ram.pop();
+    uint32_t ds1 = ram.pop();
+    uint32_t ds2 = ram.pop();
+    uint32_t ds3 = ram.pop();
+    lava_op_textout(ds0, ds1, ds2, ds3);
     ;
 }
 

@@ -421,15 +421,15 @@ void LavaProc::lava_op_scroll()
     TODO();
 }
 
-void LavaProc::lava_op_textout()
+void LavaProc::lava_op_textout(uint32_t ds0, uint32_t ds1, uint32_t ds2, uint32_t ds3)
 {
-    TODO();
+    disp->drawText(ram.readString(ds1), ds3, ds2, ds0);
 }
 
 void LavaProc::lava_op_block(uint32_t ds0, uint32_t ds1, uint32_t ds2, uint32_t ds3, uint32_t ds4)
 {
-    std::cerr << "PROC_TODO: " << __FUNCSIG__ << std::endl;
-    std::cerr << std::hex << ds0 << ", " << ds1 << ", " << ds2 << ", " << ds3 << ", " << ds4 << std::endl;
+    //std::cerr << "PROC_TODO: " << __FUNCSIG__ << std::endl;
+    //std::cerr << std::hex << ds0 << ", " << ds1 << ", " << ds2 << ", " << ds3 << ", " << ds4 << std::endl;
 
 	uint8_t no_buf = ds0 & 0x40;
 	uint8_t cmd = ds0 & 3;

@@ -18,14 +18,14 @@ public:
     Lava();
 
     bool load(const std::vector<uint8_t> &source);
+    void loadLvmBin(const std::vector<uint8_t> &data) {disp.loadLvmBin(data);}
 
     LavaProc::proc_req_t run() {return proc.run();}
 
     const std::vector<uint8_t> &inspectRam() {return proc.inspectRam();}
 
-#if LAVA_DOUBLE_BUFFER
     uint8_t *getFramebuffer() {return disp.getFramebuffer();}
-#endif
+    void framebufferSwap() {disp.framebufferSwap();}
     uint16_t getFramebufferWidth() {return disp.getFramebufferWidth();}
     uint16_t getFramebufferHeight() {return disp.getFramebufferHeight();}
     uint16_t getFramebufferStride() {return disp.getFramebufferStride();}

@@ -27,6 +27,18 @@ int lava_init(int argc, char *argv[])
     if (argc != 2)
         return 1;
 
+    // Load LVM.bin
+    std::ifstream f_lvm_bin;
+    f_lvm_bin.open("LVM.bin", std::ios::binary | std::ios::in);
+    if (!f_lvm_bin)
+        return 1;
+
+    std::vector<uint8_t> f_lvm_data(1 * 1024 * 1024);
+    f_lvm_data.resize(f_lvm_bin.rdbuf()->sgetn(reinterpret_cast<char *>(f_lvm_data.data()), f_lvm_data.size()));
+    std::cout << "Read " << f_lvm_data.size() << " bytes" << std::endl;
+    lava.loadLvmBin(f_lvm_data);
+
+    // Load .lav file
     std::ifstream flava;
     flava.open(argv[1], std::ios::binary | std::ios::in);
     if (!flava)
@@ -43,6 +55,14 @@ int lava_init(int argc, char *argv[])
     return 0;
 }
 
+void gl_refresh()
+{
+    glTextureSubImage2D(gl_data.texture.fb, 0,
+                        0, 0, lava.getFramebufferWidth(), lava.getFramebufferHeight(),
+                        GL_RED, GL_UNSIGNED_BYTE, lava.getFramebuffer());
+    glutPostRedisplay();
+}
+
 void gl_idle()
 {
     static bool lava_run = true;
@@ -51,16 +71,13 @@ void gl_idle()
         if (lava_run)
             req = lava.run();
 
-        if (req & LavaProc::ReqRefresh) {
-            glTextureSubImage2D(gl_data.texture.fb, 0,
-                                0, 0, lava.getFramebufferWidth(), lava.getFramebufferHeight(),
-                                GL_RED, GL_UNSIGNED_BYTE, lava.getFramebuffer());
-            glutPostRedisplay();
-        }
+        if (req & LavaProc::ReqRefresh)
+            gl_refresh();
 
     } catch (const std::exception &e) {
         std::cerr << e.what() << std::endl;
 
+        // Dump RAM content
         auto const &ram = lava.inspectRam();
         std::ofstream f_ram_dump;
         f_ram_dump.open("ram.bin", std::ios::binary | std::ios::out);
@@ -68,6 +85,8 @@ void gl_idle()
         f_ram_dump.close();
         std::cerr << "RAM dump: ram.bin" << std::endl;
 
+        // Force a framebuffer swap then dump
+        lava.framebufferSwap();
         auto fb = lava.getFramebuffer();
         std::ofstream f_fb_dump;
         f_fb_dump.open("fb.bin", std::ios::binary | std::ios::out);
@@ -75,6 +94,7 @@ void gl_idle()
                         LAVA_MAX_HEIGHT * LAVA_MAX_WIDTH);
         f_fb_dump.close();
         std::cerr << "FB dump: fb.bin" << std::endl;
+        gl_refresh();
 
         lava_run = false;
     }
@@ -139,7 +159,8 @@ out vec4 colour;
 void main()
 {
     float v = texture(tex, vMap).r;
-    v = v * 40.;
+    v = 1. - (v * 16.);
+    //v = v * 16.;
     colour = vec4(v, v, v, 1.);
 }
     )"));
@@ -198,6 +219,11 @@ void main()
 
 void gl_display()
 {
+#if 0
+    glTextureSubImage2D(gl_data.texture.fb, 0,
+                        0, 0, lava.getFramebufferWidth(), lava.getFramebufferHeight(),
+                        GL_RED, GL_UNSIGNED_BYTE, lava.getFramebuffer());
+#endif
     glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
     glutSwapBuffers();
 }

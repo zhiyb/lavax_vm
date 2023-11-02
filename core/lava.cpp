@@ -1,3 +1,5 @@
+#include <iostream>
+
 #include "lava.h"
 
 Lava::Lava()
@@ -56,6 +58,7 @@ bool Lava::load(const std::vector<uint8_t> &source)
     uint32_t h = header[10] * 16;
     w = w >= 320 ? 320 : w < 160 ? 160 : w;
     h = h >= 240 ? 240 : h <  80 ?  80 : h;
+    std::cerr << "Screen size: " << w << "x" << h << std::endl;
 
     disp.setMode(gmode);
     disp.setSize(w, h);

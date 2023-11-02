@@ -138,7 +138,7 @@ void lava_wrap_scroll(const std::vector<uint8_t> &data);
 void lava_op_scroll();
 
 void lava_wrap_textout(const std::vector<uint8_t> &data);
-void lava_op_textout();
+void lava_op_textout(uint32_t ds0, uint32_t ds1, uint32_t ds2, uint32_t ds3);
 
 void lava_wrap_block(const std::vector<uint8_t> &data);
 void lava_op_block(uint32_t ds0, uint32_t ds1, uint32_t ds2, uint32_t ds3, uint32_t ds4);

@@ -9,9 +9,14 @@
 #define FB_ACTIVE   (0)
 #endif
 
-#define LCD_WIDTH  320
-#define LCD_HEIGHT 240
-#define SCROLL_CON (LCD_WIDTH * (LCD_HEIGHT + 8))
+enum lvm_data_offset_t {
+    OffsetAscii     = 0,
+    OffsetAscii8    = OffsetAscii + 1536,
+    OffsetGbFont    = OffsetAscii8 + 2048,
+    OffsetGbFont16  = OffsetGbFont + 81*94*24,
+    OffsetScreenKey = OffsetGbFont16 + 81*94*32 + 0x3e,
+    OffsetPinyin    = OffsetScreenKey + 6400,
+};
 
 LavaDisp::LavaDisp()
 {
@@ -41,19 +46,14 @@ void LavaDisp::drawHLine(uint16_t x0, uint16_t x1, uint16_t y0, uint8_t cmd, uin
 	uint16_t yy = y0;
 	uint16_t xx = x0;
 
-    uint8_t bgc = 0;
-    uint8_t fgc = 1;
+    uint8_t fgc = graphic_mode == GraphicMono ? 1 : fg_colour;
+    uint8_t bgc = graphic_mode == GraphicMono ? 0 : bg_colour;
     uint8_t mask = 1;
-
     switch (graphic_mode) {
     case Graphic4:
-        bgc = bg_colour;
-        fgc = fg_colour;
         mask = 0x0f;
         break;
     case Graphic256:
-        bgc = bg_colour;
-        fgc = fg_colour;
         mask = 0xff;
         break;
     }
@@ -99,7 +99,88 @@ void LavaDisp::drawBlock(uint16_t x0, uint16_t x1, uint16_t y0, uint16_t y1, uin
 		t--;
 	}
 
-    //framebufferSwap();
+    if (no_buf)
+        framebufferSwap();
+}
+
+void LavaDisp::drawText(const std::vector<uint8_t> &str, uint16_t x, uint16_t y, uint8_t cfg)
+{
+    // Font width
+    bool large  = cfg & 0x80;
+    uint32_t w = large ? 8 : 6;
+
+    for (uint32_t i = 0; i < str.size(); i++) {
+        uint16_t c = str.at(i);
+        if (c == '\0')
+            break;
+        uint16_t sx = x;
+        if (c >= 0x80) {
+            c |= str.at(++i) << 8;
+            // Chinese characters have double width
+            x += w;
+        }
+        drawCharacter(c, sx, y, cfg);
+        x += w;
+    }
+}
+
+void LavaDisp::drawCharacter(uint16_t c, uint16_t x, uint16_t y, uint8_t cfg)
+{
+    uint32_t fb_active = FB_ACTIVE;
+
+    uint8_t c1 = c;
+    uint8_t c2 = c >> 8;
+    bool zh_cn    = c1 >= 0x80;
+    bool large    = cfg & 0x80;
+	bool no_buf   = cfg & 0x40;
+	bool negative = cfg & 0x20;
+	uint8_t cmd   = cfg & 0x0f;
+
+    lvm_data_offset_t font_type;
+    if (large)
+        font_type = zh_cn ? OffsetGbFont16 : OffsetAscii8;
+    else
+        font_type = zh_cn ? OffsetGbFont : OffsetAscii;
+
+    // Font size
+    uint8_t w = large ? 8 : 6;
+    uint8_t h = w * 2;
+    w *= zh_cn ? 2 : 1;
+
+    // Find font graphic offset
+    uint32_t offset = font_type;
+    switch (font_type) {
+    case OffsetAscii:
+        offset += c1 * 12;
+        break;
+    case OffsetAscii8:
+        offset += c1 * 16;
+        break;
+    case OffsetGbFont:  // font_12x12
+        if (c1 < 0xb0)
+            offset += ((c1 - 0xa1) * 94 + (c2 - 0xa1)) * 24;
+        else
+            offset += ((c1 - 0xa7) * 94 + (c2 - 0xa1)) * 24;
+        break;
+    default:
+        std::cerr << "Unknown font type: " << font_type << std::endl;
+        break;
+    }
+
+    // Draw graphic block
+    uint8_t fgc = graphic_mode == GraphicMono ? 1 : fg_colour;
+    uint8_t bgc = graphic_mode == GraphicMono ? 0 : bg_colour;
+    uint8_t *p = &lvm_data.at(offset);
+    uint32_t ofs = 0;   // Offset in bits
+    for (uint32_t yy = 0; yy < h; yy++) {
+        for (uint32_t xx = 0; xx < w; xx++) {
+            uint8_t v = p[ofs / 8] & (0x80 >> (ofs % 8)) ? fgc : bgc;
+            framebuffer[fb_active][y + yy][x + xx] = v;
+            ofs++;
+        }
+        // Align to 8-bit
+        ofs += (8 - (ofs % 8)) % 8;
+    }
 }
 
 void LavaDisp::framebufferFill(uint8_t c)

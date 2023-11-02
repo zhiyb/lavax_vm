@@ -67,6 +67,17 @@ public:
     }
     void writeI32(uint32_t a, int32_t v) {writeU32(a, v);}
 
+    std::vector<uint8_t> readString(uint32_t a)
+    {
+        std::vector<uint8_t> str;
+        uint8_t v;
+        do {
+            v = ram[a++];
+            str.push_back(v);
+        } while (v != '\0');
+        return str;
+    }
+
 
     uint32_t getStack() {return stack;}
     void setStack(uint32_t a) {stack = a;}
@@ -74,6 +85,7 @@ public:
     void setLocalStack(uint32_t a) {stack_local = a;}
     uint32_t getLocalStackBp() {return stack_local_bp;}
     void setLocalStackBp(uint32_t a) {stack_local_bp = a;}
+
 
 private:
     std::vector<uint8_t> ram;
