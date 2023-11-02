@@ -102,7 +102,33 @@ public:
             writeI32(a, v);
     }
 
-    std::vector<uint8_t> readString(uint32_t a)
+    std::vector<uint8_t> readData(uint32_t a, uint32_t size)
+    {
+        std::vector<uint8_t> data;
+        data.resize(size);
+        std::copy(ram.cbegin() + a, ram.cbegin() + a + size, data.begin());
+        return data;
+    }
+    void writeData(uint32_t a, const std::vector<uint8_t> &data)
+    {
+        std::copy(data.cbegin(), data.cend(), ram.begin() + a);
+    }
+
+    void writeString(uint32_t a, const std::string &str)
+    {
+        std::copy(str.cbegin(), str.cend(), ram.begin() + a);
+        ram[a + str.size()] = '\0';
+    }
+    void writeStringData(uint32_t a, const std::vector<uint8_t> &str)
+    {
+        std::copy(str.cbegin(), str.cend(), ram.begin() + a);
+    }
+    std::string readString(uint32_t a)
+    {
+        auto const &data = readStringData(a);
+        return std::string(reinterpret_cast<const char *>(data.data()), data.size() - 1);
+    }
+    std::vector<uint8_t> readStringData(uint32_t a)
     {
         std::vector<uint8_t> str;
         uint8_t v;
@@ -111,6 +137,12 @@ public:
             str.push_back(v);
         } while (v != '\0');
         return str;
+    }
+    uint32_t strlen(uint32_t a)
+    {
+        uint32_t len = 0;
+        for (; ram[a + len] != '\0'; len++);
+        return len;
     }
 
 

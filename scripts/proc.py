@@ -128,7 +128,16 @@ def main():
     fcode = open("core/lava_op_code.h", "w")
 
     op_map = []
+    names = set()
     for opcode, opinfo in op.op.items():
+        name, param, pop, push = opinfo
+
+        if name in names:
+            # Duplicated opcode
+            op_map.append(gen_map(opcode, opinfo))
+            continue
+        names.add(name)
+
         gen_declaration(fheader, opcode, opinfo)
         gen_definition(fcode, opcode, opinfo)
         gen_template(opcode, opinfo)

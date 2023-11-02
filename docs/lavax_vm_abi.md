@@ -70,10 +70,11 @@ Text buffer offset `0x1400`.
 
 (Eval/generic) stack offset `0x1b00`.\
 Stack is 4-byte aligned.
+Stack size limit 256 bytes.
 
 String stack offset `0x1c00`.\
 String stack is 1-byte aligned.\
-String stack is restricted to 768 bytes, wraps around.
+String stack size limit 768 bytes, wraps around.
 
 Boolean values:\
 `LTRUE = 0xffffffff = -1`\

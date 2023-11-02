@@ -7,6 +7,26 @@
 #include "lava_disp.h"
 #include "lava_proc.h"
 
+// Callback functions to be implemented by platform
+class LavaCallback {
+public:
+    // Return -1 to wait until next lava.run()
+    virtual int32_t delay_ms(uint32_t delay) = 0;
+
+    virtual void exit(uint32_t code) = 0;
+
+    // Return -1 to wait until next lava.run()
+    virtual int32_t getchar() = 0;
+
+    virtual int32_t check_key(uint8_t key) = 0;
+
+    virtual void refresh(uint8_t *framebuffer) = 0;
+
+    virtual uint8_t fopen(std::string path, std::string mode) = 0;
+    virtual void fclose(uint8_t fd) = 0;
+    virtual std::vector<uint8_t> fread(uint8_t fd, uint32_t size) = 0;
+};
+
 class Lava
 {
 public:
@@ -29,11 +49,12 @@ public:
     };
 
     Lava();
+    void setCallbacks(LavaCallback *cb) {proc.setCallbacks(cb);}
 
     bool load(const std::vector<uint8_t> &source);
     void loadLvmBin(const std::vector<uint8_t> &data) {disp.loadLvmBin(data);}
 
-    LavaProc::proc_req_t &run() {return proc.run();}
+    void run() {proc.run();}
 
     const std::vector<uint8_t> &inspectRam() {return proc.inspectRam();}
 

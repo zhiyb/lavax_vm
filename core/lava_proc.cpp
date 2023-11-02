@@ -2,6 +2,7 @@
 #include <iostream>
 #include <iomanip>
 #include <sstream>
+#include <queue>
 
 #include "lava.h"
 #include "lava_proc.h"
@@ -68,11 +69,18 @@ uint32_t LavaProc::parse(uint32_t ofs)
     return size;
 }
 
-LavaProc::proc_req_t &LavaProc::run()
+void LavaProc::run()
 {
-    if ((req.req & proc_req_t::ReqGetchar) && !(req.resp & proc_req_t::RespGetchar))
-        return req;
-    req.req = proc_req_t::ReqNone;
+    if (cb_func.func) {
+        int32_t ret = cb_func.func();
+        if (ret < 0)
+            return;
+        if (cb_func.stack) {
+            ram.pop();
+            ram.push(ret);
+        }
+        cb_func.func = nullptr;
+    }
 
     auto const &op = op_exec[pc];
 
@@ -97,16 +105,11 @@ LavaProc::proc_req_t &LavaProc::run()
 
     uint32_t pc_last = pc;
     op.func(this, op.data);
-    bool stall = false;
-    stall = stall || (req.req & proc_req_t::ReqGetchar);
-    if (pc == pc_last && !stall)
+    if (pc == pc_last)
         pc = pc + 1 + op.data.size();
 
     if (disp->refreshRequest())
-        req.req |= proc_req_t::ReqRefresh;
-
-    req.resp = proc_req_t::RespNone;
-    return req;
+        cb->refresh(disp->getFramebuffer());
 }
 
 #include "lava_op_code.h"
@@ -417,32 +420,48 @@ uint32_t LavaProc::lava_op_qless(int16_t dp0, uint32_t ds0)
 
 uint32_t LavaProc::lava_op_getchar()
 {
-    if (req.resp & proc_req_t::RespGetchar) {
-        ram.pop();  // Pop the value inserted before resp was ready
-        return req.resp_value;
-    } else {
-        req.req |= proc_req_t::ReqGetchar;
-        return 0;
-    }
+    cb_func.func = std::bind(&LavaCallback::getchar, cb);
+    cb_func.stack = true;
+    return 0;
 }
 
 uint32_t LavaProc::lava_op_strlen(uint32_t ds0)
 {
-    std::cerr << "PROC_TODO: " << __FUNCSIG__ << std::endl;
-    TODO();
-    return 0;
+    uint32_t addr = ds0;
+    return ram.strlen(addr);
 }
 
 void LavaProc::lava_op_delay(uint32_t ds0)
 {
-    uint32_t delay_ms = ds0 > 0x7fff ? 0x7fff : ds0;
-    req.req |= proc_req_t::ReqDelay;
-    req.req_value = delay_ms;
+    cb_func.func = std::bind(&LavaCallback::delay_ms, cb, ds0);
+    cb_func.stack = false;
 }
 
-void LavaProc::lava_op_writeblock()
+void LavaProc::lava_op_writeblock(uint32_t ds0, uint32_t ds1, uint32_t ds2, uint32_t ds3, uint32_t ds4, uint32_t ds5)
 {
-    TODO();
+    uint32_t addr = ds0;
+    uint8_t cfg = ds1;
+    uint16_t h = ds2;
+    uint16_t w = ds3;
+    uint16_t y = ds4;
+    uint16_t x = ds5;
+
+    uint32_t size = 0;
+    switch (disp->getMode()) {
+    case LavaDisp::GraphicMono:
+        size = ((w + 7) / 8) * h;
+        break;
+    case LavaDisp::Graphic16:
+        size = ((w + 1) / 2) * h;
+        break;
+    case LavaDisp::Graphic256:
+        size = w * h;
+        break;
+    }
+
+    auto const &data = ram.readData(addr, size);
+
+    disp->drawBlock(x, y, w, h, cfg, data);
 }
 
 void LavaProc::lava_op_scroll()
@@ -452,31 +471,32 @@ void LavaProc::lava_op_scroll()
 
 void LavaProc::lava_op_textout(uint32_t ds0, uint32_t ds1, uint32_t ds2, uint32_t ds3)
 {
-    disp->drawText(ram.readString(ds1), ds3, ds2, ds0);
+    disp->drawText(ram.readStringData(ds1), ds3, ds2, ds0);
 }
 
 void LavaProc::lava_op_block(uint32_t ds0, uint32_t ds1, uint32_t ds2, uint32_t ds3, uint32_t ds4)
 {
-    uint8_t no_buf = ds0 & 0x40;
-    uint8_t cmd = ds0 & 3;
-
+    uint8_t cfg = ds0;
     uint16_t y1 = ds1;
     uint16_t x1 = ds2;
     uint16_t y0 = ds3;
     uint16_t x0 = ds4;
-
-    disp->drawBlock(x0, x1, y0, y1, cmd, no_buf);
+    disp->drawBlock(x0, x1, y0, y1, cfg);
 }
 
-void LavaProc::lava_op_rectangle()
+void LavaProc::lava_op_rectangle(uint32_t ds0, uint32_t ds1, uint32_t ds2, uint32_t ds3, uint32_t ds4)
 {
-    TODO();
+    uint8_t cfg = ds0;
+    uint16_t y1 = ds1;
+    uint16_t x1 = ds2;
+    uint16_t y0 = ds3;
+    uint16_t x0 = ds4;
+    disp->drawRectangle(x0, x1, y0, y1, cfg);
 }
 
 void LavaProc::lava_op_exit(uint32_t ds0)
 {
-    req.req |= proc_req_t::ReqExit;
-    req.req_value = ds0;
+    cb->exit(ds0);
 }
 
 void LavaProc::lava_op_clearscreen()
@@ -486,19 +506,26 @@ void LavaProc::lava_op_clearscreen()
 
 uint32_t LavaProc::lava_op_fopen(uint32_t ds0, uint32_t ds1)
 {
-    std::cerr << "PROC_TODO: " << __FUNCSIG__ << std::endl;
-    return 0;
+    auto const &path = ram.readString(ds1);
+    auto const &mode = ram.readString(ds0);
+    return cb->fopen(path, mode);
 }
 
 void LavaProc::lava_op_fclose(uint32_t ds0)
 {
-    std::cerr << "PROC_TODO: " << __FUNCSIG__ << std::endl;
+    cb->fclose(ds0);
 }
 
-uint32_t LavaProc::lava_op_fread(uint32_t ds0, uint32_t ds1, uint32_t ds2)
+uint32_t LavaProc::lava_op_fread(uint32_t ds0, uint32_t ds1, uint32_t ds2, uint32_t ds3)
 {
-    std::cerr << "PROC_TODO: " << __FUNCSIG__ << std::endl;
-    return 0;
+    uint8_t fd = ds0;
+    uint32_t size = ds1 * ds2;
+    uint32_t addr = ds3;
+
+    auto const &data = cb->fread(fd, size);
+    ram.writeData(addr, data);
+    //std::cerr << (int)fd << ", " << size << ", " << addr << ", " << data.size() << std::endl;
+    return data.size();
 }
 
 void LavaProc::lava_op_fwrite()
@@ -506,21 +533,96 @@ void LavaProc::lava_op_fwrite()
     TODO();
 }
 
-void LavaProc::lava_op_sprintf()
+void LavaProc::lava_op_sprintf(uint32_t ds0)
 {
-    TODO();
+    uint32_t nparams = (uint8_t)ds0 - 2;
+    std::vector<uint32_t> params;
+    for (int i = 0; i < nparams; i++)
+        params.push_back(ram.pop());
+
+    auto const &fmt = ram.readString(ram.pop());
+    uint32_t dst = ram.pop();
+
+    std::string out;
+    int iparam = 0;
+    for (int i = 0; i < fmt.size(); i++) {
+        // Process the format string
+        char cfmt = fmt[i];
+        if (cfmt == '\0') {
+            break;
+        } else if (cfmt != '%') {
+            // Normal character
+            out.push_back(cfmt);
+            continue;
+        }
+
+        // % format specifier
+        i++;
+
+        // Check special formatting
+        bool left_adjust = false;   // flag 0x80
+        bool zero_fill = false;     // flag 0x40
+        for (;;) {
+            char c = fmt[i];
+            if (c == '-')
+                left_adjust = true;
+            else if (c == '0')
+                zero_fill = true;
+            else
+                break;
+            i++;
+        }
+
+        // Check field length
+        int len = 0;
+        for (;;) {
+            char c = fmt[i];
+            if (c >= '0' && c <= '9')
+                len = len * 10 + c - '0';
+            else
+                break;
+            i++;
+        }
+
+        // Check format type
+        cfmt = fmt[i];
+        if (cfmt == 'd') {
+            std::string sval = std::to_string((int32_t)params[iparam++]);
+            if (len > sval.length()) {
+                char cfill = left_adjust ? ' ' : zero_fill ? '0' : ' ';
+                std::string sfill(len - sval.length(), cfill);
+                if (left_adjust)
+                    sval = sfill + sval;
+                else
+                    sval = sval + sfill;
+            }
+            out = out + sval;
+        } else if (cfmt == 'f') {
+            TODO();
+            out.push_back(cfmt);
+        } else if (cfmt == '%') {
+            TODO();
+            out.push_back(cfmt);
+        } else if (cfmt == 'c') {
+            TODO();
+            out.push_back(cfmt);
+        } else if (cfmt == 's') {
+            TODO();
+            out.push_back(cfmt);
+        } else {
+            // Unknown
+            out.push_back(cfmt);
+        }
+    }
+
+    //std::cerr << fmt << ": " << out << std::endl;
+
+    ram.writeString(dst, out);
 }
 
 uint32_t LavaProc::lava_op_checkkey(uint32_t ds0)
 {
-    PROC_TODO();
-    if (req.resp & proc_req_t::RespGetchar) {
-        ram.pop();  // Pop the value inserted before resp was ready
-        return req.resp_value;
-    } else {
-        req.req |= proc_req_t::ReqGetchar;
-        return 0;
-    }
+    return cb->check_key(ds0);
 }
 
 uint32_t LavaProc::lava_op_setgraphmode(uint32_t ds0)

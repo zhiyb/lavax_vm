@@ -5,10 +5,12 @@
 
 #include <iostream>
 #include <fstream>
+#include <filesystem>
 #include <stdexcept>
 #include <string>
 #include <vector>
 #include <queue>
+#include <unordered_set>
 #include <unordered_map>
 #include <cstdint>
 
@@ -26,20 +28,41 @@ Lava lava;
 
 static struct {
     bool run;
-    int tick;
-    int delay_ms;
-    bool getchar;
-    std::queue<int> key_seq;
     uint32_t ret_code;
+    std::queue<int> key_seq;
+    std::unordered_set<int> key_state;
+    std::unordered_map<int, std::fstream> file_map;
 } lava_state;
+
+class Callback: public LavaCallback
+{
+public:
+    virtual int32_t delay_ms(uint32_t delay);
+    virtual void exit(uint32_t code);
+
+    virtual int32_t getchar();
+    virtual int32_t check_key(uint8_t key);
+
+    virtual void refresh(uint8_t *framebuffer);
+
+    virtual uint8_t fopen(std::string path, std::string mode);
+    virtual void fclose(uint8_t fd);
+    virtual std::vector<uint8_t> fread(uint8_t fd, uint32_t size);
+
+private:
+    bool delay_pending = false;
+    int tick = -1;
+};
+
+Callback cb;
 
 #define SPECIAL_KEY 0x8000
 
 static std::unordered_map<int, uint8_t> key_map = {
     {SPECIAL_KEY | GLUT_KEY_UP,    Lava::KeyUp},
     {SPECIAL_KEY | GLUT_KEY_DOWN,  Lava::KeyDown},
-    {SPECIAL_KEY | GLUT_KEY_LEFT,  Lava::KeyRight},
-    {SPECIAL_KEY | GLUT_KEY_RIGHT, Lava::KeyLeft},
+    {SPECIAL_KEY | GLUT_KEY_LEFT,  Lava::KeyLeft},
+    {SPECIAL_KEY | GLUT_KEY_RIGHT, Lava::KeyRight},
     {SPECIAL_KEY | GLUT_KEY_F1,    Lava::KeyF1},
     {SPECIAL_KEY | GLUT_KEY_F2,    Lava::KeyF2},
     {SPECIAL_KEY | GLUT_KEY_F3,    Lava::KeyHelp},
@@ -61,8 +84,9 @@ int lava_init(int argc, char *argv[])
     if (argc != 2)
         return 1;
 
-    lava_state.run = true;
     key_map_init();
+    lava.setCallbacks(&cb);
+    lava_state.run = true;
 
     // Load LVM.bin
     std::ifstream f_lvm_bin;
@@ -92,7 +116,38 @@ int lava_init(int argc, char *argv[])
     return 0;
 }
 
-void gl_refresh()
+// LAVA miscellaneous
+
+int Callback::delay_ms(uint32_t delay)
+{
+    if (!delay_pending) {
+        tick = glutGet(GLUT_ELAPSED_TIME);
+        delay_pending = true;
+        return -1;
+    }
+
+    int delta = glutGet(GLUT_ELAPSED_TIME) - tick;
+#if 1
+    // Shorter delay for debugging
+    if (delta * 10 < delay)
+        return -1;
+#else
+    if (delta < delay)
+        return -1;
+#endif
+
+    delay_pending = false;
+    return 0;
+}
+
+void Callback::exit(uint32_t code)
+{
+    lava_state.ret_code = code;
+    lava_state.run = false;
+    glutLeaveMainLoop();
+}
+
+void Callback::refresh(uint8_t *framebuffer)
 {
     glTextureSubImage2D(gl_data.texture.fb, 0,
                         0, 0, lava.getFramebufferWidth(), lava.getFramebufferHeight(),
@@ -100,28 +155,101 @@ void gl_refresh()
     glutPostRedisplay();
 }
 
+void gl_refresh()
+{
+    cb.refresh(lava.getFramebuffer());
+}
+
+// LAVA file operations
+
+uint8_t Callback::fopen(std::string path, std::string mode)
+{
+    std::filesystem::path fpath(".");
+    fpath += path;
+    //std::cerr << __func__ << "(" << fpath << ", \"" << mode << "\")" << std::endl;
+    std::ios::openmode fmode = 0;
+    // Always use binary mode to avoid issues with line return characters
+    fmode |= std::ios::binary;
+    for (auto c: mode) {
+        switch (c) {
+        case 'r':
+            fmode |= std::ios::in;
+            break;
+        case 'w':
+            fmode |= std::ios::out;
+            break;
+        case '+':
+            fmode |= std::ios::in | std::ios::out;
+            break;
+        case 'b':
+            fmode |= std::ios::binary;
+            break;
+        default:
+            throw std::runtime_error("Unknown file mode: \"" + mode + "\": " + path);
+            break;
+        }
+    }
+    for (int i = 1; i <= 255; i++) {
+        if (lava_state.file_map.find(i) == lava_state.file_map.end()) {
+            auto &fstream = lava_state.file_map[i];
+            fstream.open(fpath, fmode);
+            if (fstream)
+                return i;
+            else
+                return 0;
+        }
+    }
+    return 0;
+}
+
+std::vector<uint8_t> Callback::fread(uint8_t fd, uint32_t size)
+{
+    auto it = lava_state.file_map.find(fd);
+    if (it == lava_state.file_map.end())
+        return std::vector<uint8_t>();
+    std::vector<uint8_t> data;
+    data.resize(size);
+    data.resize(it->second.rdbuf()->sgetn(reinterpret_cast<char *>(data.data()), size));
+    return data;
+}
+
+void Callback::fclose(uint8_t fd)
+{
+    auto it = lava_state.file_map.find(fd);
+    if (it == lava_state.file_map.end())
+        return;
+    it->second.close();
+    lava_state.file_map.erase(fd);
+}
+
+// LAVA keyboard process
+
 void gl_keyboard_keys(uint8_t key, int x, int y)
 {
     if (!lava_state.run)
         glutLeaveMainLoop();
     lava_state.key_seq.push(key);
+    lava_state.key_state.insert(key);
 }
 
 void gl_keyboard_keys_up(uint8_t key, int x, int y)
 {
-    ;
+    lava_state.key_state.erase(key);
 }
 
 void gl_special_keys(int key, int x, int y)
 {
     if (!lava_state.run)
         glutLeaveMainLoop();
-    lava_state.key_seq.push(SPECIAL_KEY | key);
+    key |= SPECIAL_KEY;
+    lava_state.key_seq.push(key);
+    lava_state.key_state.insert(key);
 }
 
 void gl_special_keys_up(int key, int x, int y)
 {
-    ;
+    key |= SPECIAL_KEY;
+    lava_state.key_state.erase(key);
 }
 
 uint8_t keycode_conv(int key)
@@ -131,42 +259,42 @@ uint8_t keycode_conv(int key)
         std::cerr << "Key code not found: " << key << std::endl;
         return 0;
     }
+    std::cerr << "Key code found: " << key << std::endl;
     return k->second;
 }
+
+int32_t Callback::getchar()
+{
+    if (lava_state.key_seq.empty())
+        return -1;
+    int v = lava_state.key_seq.front();
+    lava_state.key_seq.pop();
+    return keycode_conv(v);
+}
+
+int32_t Callback::check_key(uint8_t key)
+{
+    if (key >= 0x80) {
+        if (lava_state.key_state.empty())
+            return Lava::False;
+        return keycode_conv(*lava_state.key_state.cbegin());
+    }
+
+    for (auto const &k: lava_state.key_state) {
+        uint32_t kcode = keycode_conv(k);
+        if (kcode == key)
+            return Lava::True;
+    }
+    return Lava::False;
+}
+
+// LAVA main loop
 
 void gl_idle()
 {
     try {
-        if (lava_state.delay_ms) {
-            int delta = glutGet(GLUT_ELAPSED_TIME) - lava_state.tick;
-            if (delta >= lava_state.delay_ms)
-                lava_state.delay_ms = 0;
-
-        } else if (lava_state.run) {
-            auto &req = lava.run();
-
-            if (req.req & LavaProc::proc_req_t::ReqRefresh)
-                gl_refresh();
-
-            if (req.req & LavaProc::proc_req_t::ReqDelay) {
-                lava_state.tick = glutGet(GLUT_ELAPSED_TIME);
-                lava_state.delay_ms = req.req_value;
-            }
-
-            if (req.req & LavaProc::proc_req_t::ReqGetchar) {
-                if (!lava_state.key_seq.empty()) {
-                    req.resp |= LavaProc::proc_req_t::RespGetchar;
-                    req.resp_value = keycode_conv(lava_state.key_seq.front());
-                    lava_state.key_seq.pop();
-                }
-            }
-
-            if (req.req & LavaProc::proc_req_t::ReqExit) {
-                lava_state.run = false;
-                lava_state.ret_code = req.req_value;
-                //glutLeaveMainLoop();
-            }
-        }
+        if (lava_state.run)
+            lava.run();
 
     } catch (const std::exception &e) {
         std::cerr << e.what() << std::endl;
@@ -195,6 +323,7 @@ void gl_idle()
         //glutLeaveMainLoop();
     }
 }
+
 
 // OpenGL stuff
 

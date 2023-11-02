@@ -132,7 +132,7 @@ void lava_wrap_delay(const std::vector<uint8_t> &data);
 void lava_op_delay(uint32_t ds0);
 
 void lava_wrap_writeblock(const std::vector<uint8_t> &data);
-void lava_op_writeblock();
+void lava_op_writeblock(uint32_t ds0, uint32_t ds1, uint32_t ds2, uint32_t ds3, uint32_t ds4, uint32_t ds5);
 
 void lava_wrap_scroll(const std::vector<uint8_t> &data);
 void lava_op_scroll();
@@ -144,7 +144,7 @@ void lava_wrap_block(const std::vector<uint8_t> &data);
 void lava_op_block(uint32_t ds0, uint32_t ds1, uint32_t ds2, uint32_t ds3, uint32_t ds4);
 
 void lava_wrap_rectangle(const std::vector<uint8_t> &data);
-void lava_op_rectangle();
+void lava_op_rectangle(uint32_t ds0, uint32_t ds1, uint32_t ds2, uint32_t ds3, uint32_t ds4);
 
 void lava_wrap_exit(const std::vector<uint8_t> &data);
 void lava_op_exit(uint32_t ds0);
@@ -159,13 +159,13 @@ void lava_wrap_fclose(const std::vector<uint8_t> &data);
 void lava_op_fclose(uint32_t ds0);
 
 void lava_wrap_fread(const std::vector<uint8_t> &data);
-uint32_t lava_op_fread(uint32_t ds0, uint32_t ds1, uint32_t ds2);
+uint32_t lava_op_fread(uint32_t ds0, uint32_t ds1, uint32_t ds2, uint32_t ds3);
 
 void lava_wrap_fwrite(const std::vector<uint8_t> &data);
 void lava_op_fwrite();
 
 void lava_wrap_sprintf(const std::vector<uint8_t> &data);
-void lava_op_sprintf();
+void lava_op_sprintf(uint32_t ds0);
 
 void lava_wrap_checkkey(const std::vector<uint8_t> &data);
 uint32_t lava_op_checkkey(uint32_t ds0);

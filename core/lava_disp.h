@@ -19,7 +19,7 @@ public:
     };
 
     void setSize(uint16_t w, uint16_t h) {width = w; height = h;}
-    void setMode(mode_t mode) {graphic_mode = mode;}
+    void setMode(mode_t mode);
     mode_t getMode() {return graphic_mode;}
 
     uint8_t refreshRequest()
@@ -32,12 +32,17 @@ public:
     void clearScreen();
 
     // Draw solid rectangle block
-    void drawBlock(uint16_t x0, uint16_t x1, uint16_t y0, uint16_t y1, uint8_t cmd, uint8_t no_buf);
+    void drawBlock(uint16_t x0, uint16_t x1, uint16_t y0, uint16_t y1, uint8_t cfg);
+    // Draw block
+    void drawBlock(uint16_t x, uint16_t y, uint16_t w, uint16_t h, uint8_t cfg,
+                   const std::vector<uint8_t> &data);
+    // Draw rectangle
+    void drawRectangle(uint16_t x0, uint16_t x1, uint16_t y0, uint16_t y1, uint8_t cfg);
     // Draw text
     void drawText(const std::vector<uint8_t> &str, uint16_t x, uint16_t y, uint8_t cfg);
 
-    void setForegroundColour(uint8_t c) {fg_colour = c;}
-    void setBackgroundColour(uint8_t c) {bg_colour = c;}
+    void setForegroundColour(uint8_t c) {fg_colour = c & colour_mask;}
+    void setBackgroundColour(uint8_t c) {bg_colour = c & colour_mask;}
 
 #if LAVA_DOUBLE_BUFFER
     uint8_t *getFramebuffer() {return &framebuffer[fb_disp][0][0];}
@@ -51,8 +56,10 @@ public:
     uint16_t getFramebufferStride() {return LAVA_MAX_WIDTH;}
 
 private:
-    // Draw horizontal line
-    void drawHLine(uint16_t x0, uint16_t x1, uint16_t y0, uint8_t cmd, uint8_t no_buf);
+    // Draw a horizontal line
+    void drawHLine(uint16_t x, uint16_t y, uint16_t w, uint8_t cfg);
+    // Draw a vertical line
+    void drawVLine(uint16_t x, uint16_t y, uint16_t h, uint8_t cfg);
     // Draw a character
     void drawCharacter(uint16_t c, uint16_t x, uint16_t y, uint8_t cfg);
 
@@ -65,6 +72,6 @@ private:
     uint32_t fb_disp;
     uint16_t width, height;
     mode_t graphic_mode;
-    uint8_t fg_colour, bg_colour;
+    uint8_t fg_colour, bg_colour, colour_mask;
     uint8_t refresh;
 };

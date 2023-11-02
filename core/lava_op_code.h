@@ -388,8 +388,13 @@ void LavaProc::lava_wrap_delay(const std::vector<uint8_t> &data)
 
 void LavaProc::lava_wrap_writeblock(const std::vector<uint8_t> &data)
 {
-
-    lava_op_writeblock();
+    uint32_t ds0 = ram.pop();
+    uint32_t ds1 = ram.pop();
+    uint32_t ds2 = ram.pop();
+    uint32_t ds3 = ram.pop();
+    uint32_t ds4 = ram.pop();
+    uint32_t ds5 = ram.pop();
+    lava_op_writeblock(ds0, ds1, ds2, ds3, ds4, ds5);
     ;
 }
 
@@ -423,8 +428,12 @@ void LavaProc::lava_wrap_block(const std::vector<uint8_t> &data)
 
 void LavaProc::lava_wrap_rectangle(const std::vector<uint8_t> &data)
 {
-
-    lava_op_rectangle();
+    uint32_t ds0 = ram.pop();
+    uint32_t ds1 = ram.pop();
+    uint32_t ds2 = ram.pop();
+    uint32_t ds3 = ram.pop();
+    uint32_t ds4 = ram.pop();
+    lava_op_rectangle(ds0, ds1, ds2, ds3, ds4);
     ;
 }
 
@@ -462,7 +471,8 @@ void LavaProc::lava_wrap_fread(const std::vector<uint8_t> &data)
     uint32_t ds0 = ram.pop();
     uint32_t ds1 = ram.pop();
     uint32_t ds2 = ram.pop();
-    uint32_t ret = lava_op_fread(ds0, ds1, ds2);
+    uint32_t ds3 = ram.pop();
+    uint32_t ret = lava_op_fread(ds0, ds1, ds2, ds3);
     ram.push(ret);
 }
 
@@ -475,8 +485,8 @@ void LavaProc::lava_wrap_fwrite(const std::vector<uint8_t> &data)
 
 void LavaProc::lava_wrap_sprintf(const std::vector<uint8_t> &data)
 {
-
-    lava_op_sprintf();
+    uint32_t ds0 = ram.pop();
+    lava_op_sprintf(ds0);
     ;
 }
 
