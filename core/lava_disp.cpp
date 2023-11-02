@@ -39,18 +39,15 @@ void LavaDisp::clearScreen()
 void LavaDisp::drawHLine(uint16_t x0, uint16_t x1, uint16_t y0, uint8_t cmd, uint8_t no_buf)
 {
     // Assert: y0 < height, x0 < width, x1 < width, x0 <= x1
-    uint32_t fb_active = FB_ACTIVE;
-    //std::cerr << x0 << ", " << x1 << ", " << y0 << ", " << (uint32_t)cmd << ", " << (uint32_t)no_buf << std::endl;
 
-	//uint8_t *p;
-	uint16_t yy = y0;
-	uint16_t xx = x0;
+    uint16_t yy = y0;
+    uint16_t xx = x0;
 
     uint8_t fgc = graphic_mode == GraphicMono ? 1 : fg_colour;
     uint8_t bgc = graphic_mode == GraphicMono ? 0 : bg_colour;
     uint8_t mask = 1;
     switch (graphic_mode) {
-    case Graphic4:
+    case Graphic16:
         mask = 0x0f;
         break;
     case Graphic256:
@@ -58,7 +55,7 @@ void LavaDisp::drawHLine(uint16_t x0, uint16_t x1, uint16_t y0, uint8_t cmd, uin
         break;
     }
 
-	//uint16_t width = x1 - x0 + 1;
+    uint32_t fb_active = FB_ACTIVE;
     switch (cmd) {
     case 0: // Fill with background colour
         std::fill(&framebuffer[fb_active][y0][x0],
@@ -74,16 +71,16 @@ void LavaDisp::drawHLine(uint16_t x0, uint16_t x1, uint16_t y0, uint8_t cmd, uin
         std::transform(&framebuffer[fb_active][y0][x0],
                        &framebuffer[fb_active][y0][x1 + 1],
                        &framebuffer[fb_active][y0][x0],
-                       [](uint8_t c) {return c ^ 0xff;});
+                       [=](uint8_t c) {return c ^ mask;});
         break;
     }
 }
 
 void LavaDisp::drawBlock(uint16_t x0, uint16_t x1, uint16_t y0, uint16_t y1, uint8_t cmd, uint8_t no_buf)
 {
-	if (y0 > y1)
+    if (y0 > y1)
         std::swap(y0, y1);
-	if (x0 > x1)
+    if (x0 > x1)
         std::swap(x0, x1);
 
     x0 = std::min(x0, (uint16_t)(width - 1));
@@ -91,13 +88,13 @@ void LavaDisp::drawBlock(uint16_t x0, uint16_t x1, uint16_t y0, uint16_t y1, uin
     y0 = std::min(y0, (uint16_t)(height - 1));
     y1 = std::min(y1, (uint16_t)(height - 1));
 
-	uint16_t t;
-	t = y1 - y0 + 1;
-	while (t) {
+    uint16_t t;
+    t = y1 - y0 + 1;
+    while (t) {
         drawHLine(x0, x1, y0, cmd, no_buf);
-		y0++;
-		t--;
-	}
+        y0++;
+        t--;
+    }
 
     if (no_buf)
         framebufferSwap();
@@ -132,9 +129,9 @@ void LavaDisp::drawCharacter(uint16_t c, uint16_t x, uint16_t y, uint8_t cfg)
     uint8_t c2 = c >> 8;
     bool zh_cn    = c1 >= 0x80;
     bool large    = cfg & 0x80;
-	bool no_buf   = cfg & 0x40;
-	bool negative = cfg & 0x20;
-	uint8_t cmd   = cfg & 0x0f;
+    bool no_buf   = cfg & 0x40;
+    bool negative = cfg & 0x20;
+    uint8_t cmd   = cfg & 0x0f;
 
     lvm_data_offset_t font_type;
     if (large)

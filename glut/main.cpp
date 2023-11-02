@@ -8,6 +8,8 @@
 #include <stdexcept>
 #include <string>
 #include <vector>
+#include <queue>
+#include <unordered_map>
 #include <cstdint>
 
 #include "lava.h"
@@ -22,10 +24,45 @@ struct {
 
 Lava lava;
 
+static struct {
+    bool run;
+    int tick;
+    int delay_ms;
+    bool getchar;
+    std::queue<int> key_seq;
+    uint32_t ret_code;
+} lava_state;
+
+#define SPECIAL_KEY 0x8000
+
+static std::unordered_map<int, uint8_t> key_map = {
+    {SPECIAL_KEY | GLUT_KEY_UP,    Lava::KeyUp},
+    {SPECIAL_KEY | GLUT_KEY_DOWN,  Lava::KeyDown},
+    {SPECIAL_KEY | GLUT_KEY_LEFT,  Lava::KeyRight},
+    {SPECIAL_KEY | GLUT_KEY_RIGHT, Lava::KeyLeft},
+    {SPECIAL_KEY | GLUT_KEY_F1,    Lava::KeyF1},
+    {SPECIAL_KEY | GLUT_KEY_F2,    Lava::KeyF2},
+    {SPECIAL_KEY | GLUT_KEY_F3,    Lava::KeyHelp},
+    {27,                           Lava::KeyEsc},
+    {0x0d,                         Lava::KeyEnter},
+    {' ',                          Lava::KeySpace},
+};
+
+void key_map_init()
+{
+    for (char c = 'a'; c <= 'z'; c++)
+        key_map[c] = c;
+    for (char c = 'A'; c <= 'Z'; c++)
+        key_map[c] = c;
+}
+
 int lava_init(int argc, char *argv[])
 {
     if (argc != 2)
         return 1;
+
+    lava_state.run = true;
+    key_map_init();
 
     // Load LVM.bin
     std::ifstream f_lvm_bin;
@@ -63,16 +100,73 @@ void gl_refresh()
     glutPostRedisplay();
 }
 
+void gl_keyboard_keys(uint8_t key, int x, int y)
+{
+    if (!lava_state.run)
+        glutLeaveMainLoop();
+    lava_state.key_seq.push(key);
+}
+
+void gl_keyboard_keys_up(uint8_t key, int x, int y)
+{
+    ;
+}
+
+void gl_special_keys(int key, int x, int y)
+{
+    if (!lava_state.run)
+        glutLeaveMainLoop();
+    lava_state.key_seq.push(SPECIAL_KEY | key);
+}
+
+void gl_special_keys_up(int key, int x, int y)
+{
+    ;
+}
+
+uint8_t keycode_conv(int key)
+{
+    auto const &k = key_map.find(key);
+    if (k == key_map.cend()) {
+        std::cerr << "Key code not found: " << key << std::endl;
+        return 0;
+    }
+    return k->second;
+}
+
 void gl_idle()
 {
-    static bool lava_run = true;
     try {
-        LavaProc::proc_req_t req = LavaProc::ReqNone;
-        if (lava_run)
-            req = lava.run();
+        if (lava_state.delay_ms) {
+            int delta = glutGet(GLUT_ELAPSED_TIME) - lava_state.tick;
+            if (delta >= lava_state.delay_ms)
+                lava_state.delay_ms = 0;
 
-        if (req & LavaProc::ReqRefresh)
-            gl_refresh();
+        } else if (lava_state.run) {
+            auto &req = lava.run();
+
+            if (req.req & LavaProc::proc_req_t::ReqRefresh)
+                gl_refresh();
+
+            if (req.req & LavaProc::proc_req_t::ReqDelay) {
+                lava_state.tick = glutGet(GLUT_ELAPSED_TIME);
+                lava_state.delay_ms = req.req_value;
+            }
+
+            if (req.req & LavaProc::proc_req_t::ReqGetchar) {
+                if (!lava_state.key_seq.empty()) {
+                    req.resp |= LavaProc::proc_req_t::RespGetchar;
+                    req.resp_value = keycode_conv(lava_state.key_seq.front());
+                    lava_state.key_seq.pop();
+                }
+            }
+
+            if (req.req & LavaProc::proc_req_t::ReqExit) {
+                lava_state.run = false;
+                lava_state.ret_code = req.req_value;
+                //glutLeaveMainLoop();
+            }
+        }
 
     } catch (const std::exception &e) {
         std::cerr << e.what() << std::endl;
@@ -96,7 +190,9 @@ void gl_idle()
         std::cerr << "FB dump: fb.bin" << std::endl;
         gl_refresh();
 
-        lava_run = false;
+        lava_state.run = false;
+        lava_state.ret_code = -1;
+        //glutLeaveMainLoop();
     }
 }
 
@@ -248,12 +344,17 @@ int main(int argc, char *argv[])
     uint32_t scnh = glutGet(GLUT_SCREEN_HEIGHT);
     uint32_t w = lava.getFramebufferWidth();
     uint32_t h = lava.getFramebufferHeight();
-    uint32_t s = std::max(1u, std::min(scnw / w, scnh / h) / 2u);
+    uint32_t s = std::max(1u, std::min(scnw / w / 2, scnh / h / 2));
     glutInitWindowSize(w * s, h * s);
+    glutSetKeyRepeat(GLUT_KEY_REPEAT_OFF);
 
     int window = glutCreateWindow("lava_glut");
     glutDisplayFunc(&gl_display);
     glutReshapeFunc(&gl_reshape);
+    glutSpecialFunc(&gl_special_keys);
+    glutSpecialUpFunc(&gl_special_keys_up);
+    glutKeyboardFunc(&gl_keyboard_keys);
+    glutKeyboardUpFunc(&gl_keyboard_keys_up);
     glutIdleFunc(&gl_idle);
 
     GLenum glew_err = glewInit();
@@ -270,5 +371,5 @@ int main(int argc, char *argv[])
     }
 
     glutMainLoop();
-    return 0;
+    return lava_state.ret_code;
 }

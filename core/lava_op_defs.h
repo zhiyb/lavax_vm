@@ -36,10 +36,10 @@ void lava_wrap_pusha_i32(const std::vector<uint8_t> &data);
 uint32_t lava_op_pusha_i32(uint32_t dp0, uint32_t ds0);
 
 void lava_wrap_INC(const std::vector<uint8_t> &data);
-void lava_op_INC(uint32_t ds0);
+uint32_t lava_op_INC(uint32_t ds0);
 
 void lava_wrap_DEC(const std::vector<uint8_t> &data);
-void lava_op_DEC(uint32_t ds0);
+uint32_t lava_op_DEC(uint32_t ds0);
 
 void lava_wrap_add(const std::vector<uint8_t> &data);
 uint32_t lava_op_add(uint32_t ds0, uint32_t ds1);
@@ -123,7 +123,7 @@ void lava_wrap_qless(const std::vector<uint8_t> &data);
 uint32_t lava_op_qless(int16_t dp0, uint32_t ds0);
 
 void lava_wrap_getchar(const std::vector<uint8_t> &data);
-void lava_op_getchar();
+uint32_t lava_op_getchar();
 
 void lava_wrap_strlen(const std::vector<uint8_t> &data);
 uint32_t lava_op_strlen(uint32_t ds0);
@@ -168,7 +168,7 @@ void lava_wrap_sprintf(const std::vector<uint8_t> &data);
 void lava_op_sprintf();
 
 void lava_wrap_checkkey(const std::vector<uint8_t> &data);
-void lava_op_checkkey();
+uint32_t lava_op_checkkey(uint32_t ds0);
 
 void lava_wrap_setgraphmode(const std::vector<uint8_t> &data);
 uint32_t lava_op_setgraphmode(uint32_t ds0);

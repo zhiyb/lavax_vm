@@ -131,15 +131,15 @@ void LavaProc::lava_wrap_pusha_i32(const std::vector<uint8_t> &data)
 void LavaProc::lava_wrap_INC(const std::vector<uint8_t> &data)
 {
     uint32_t ds0 = ram.pop();
-    lava_op_INC(ds0);
-    ;
+    uint32_t ret = lava_op_INC(ds0);
+    ram.push(ret);
 }
 
 void LavaProc::lava_wrap_DEC(const std::vector<uint8_t> &data)
 {
     uint32_t ds0 = ram.pop();
-    lava_op_DEC(ds0);
-    ;
+    uint32_t ret = lava_op_DEC(ds0);
+    ram.push(ret);
 }
 
 void LavaProc::lava_wrap_add(const std::vector<uint8_t> &data)
@@ -368,8 +368,8 @@ void LavaProc::lava_wrap_qless(const std::vector<uint8_t> &data)
 void LavaProc::lava_wrap_getchar(const std::vector<uint8_t> &data)
 {
 
-    lava_op_getchar();
-    ;
+    uint32_t ret = lava_op_getchar();
+    ram.push(ret);
 }
 
 void LavaProc::lava_wrap_strlen(const std::vector<uint8_t> &data)
@@ -482,9 +482,9 @@ void LavaProc::lava_wrap_sprintf(const std::vector<uint8_t> &data)
 
 void LavaProc::lava_wrap_checkkey(const std::vector<uint8_t> &data)
 {
-
-    lava_op_checkkey();
-    ;
+    uint32_t ds0 = ram.pop();
+    uint32_t ret = lava_op_checkkey(ds0);
+    ram.push(ret);
 }
 
 void LavaProc::lava_wrap_setgraphmode(const std::vector<uint8_t> &data)

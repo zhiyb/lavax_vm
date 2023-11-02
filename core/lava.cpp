@@ -44,7 +44,7 @@ bool Lava::load(const std::vector<uint8_t> &source)
         gmode = LavaDisp::GraphicMono;
         break;
     case 0x40:
-        gmode = LavaDisp::Graphic4;
+        gmode = LavaDisp::Graphic16;
         break;
     case 0x60:
         gmode = LavaDisp::Graphic256;

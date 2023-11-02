@@ -3,6 +3,8 @@
 
 void LavaRam::init(uint32_t rambits)
 {
+    this->ram_bits = rambits;
+    this->ram_mask = rambits <= 16 ? 0x0000ffff : 0x00ffffff;
     if (rambits <= 16)
         ram.resize(1ul << 16);
     else

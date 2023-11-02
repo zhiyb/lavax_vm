@@ -6,13 +6,15 @@
 #include "lava.h"
 #include "lava_proc.h"
 
-#define TODO()  throw std::runtime_error("PROC_TODO: " + std::to_string(__LINE__))
+#define TODO()      throw std::runtime_error("PROC_TODO: " + std::to_string(__LINE__))
+#define PROC_TODO() std::cerr << "PROC_TODO: " << __FUNCSIG__ << std::endl
 
 
 bool LavaProc::load(const std::vector<uint8_t> &source, uint32_t rambits, bool pen_input)
 {
     this->source = source;
     this->rambits = rambits;
+    this->ram_mask = rambits <= 16 ? 0x0000ffff : 0x00ffffff;
     this->pen_input = pen_input;
 
     ram.init(rambits);
@@ -66,10 +68,13 @@ uint32_t LavaProc::parse(uint32_t ofs)
     return size;
 }
 
-LavaProc::proc_req_t LavaProc::run()
+LavaProc::proc_req_t &LavaProc::run()
 {
+    if ((req.req & proc_req_t::ReqGetchar) && !(req.resp & proc_req_t::RespGetchar))
+        return req;
+    req.req = proc_req_t::ReqNone;
+
     auto const &op = op_exec[pc];
-    LavaProc::proc_req_t req = ReqNone;
 
 #if 1
     static bool print = true;
@@ -92,11 +97,15 @@ LavaProc::proc_req_t LavaProc::run()
 
     uint32_t pc_last = pc;
     op.func(this, op.data);
-    if (pc == pc_last)
+    bool stall = false;
+    stall = stall || (req.req & proc_req_t::ReqGetchar);
+    if (pc == pc_last && !stall)
         pc = pc + 1 + op.data.size();
 
     if (disp->refreshRequest())
-        req = (proc_req_t)(req | ReqRefresh);
+        req.req |= proc_req_t::ReqRefresh;
+
+    req.resp = proc_req_t::RespNone;
     return req;
 }
 
@@ -172,14 +181,36 @@ uint32_t LavaProc::lava_op_pusha_i32(uint32_t dp0, uint32_t ds0)
     return a;
 }
 
-void LavaProc::lava_op_INC(uint32_t ds0)
+uint32_t LavaProc::lava_op_INC(uint32_t ds0)
 {
-    TODO();
+    int32_t addr = ds0;
+    uint8_t type = 0;
+    if (rambits > 16)
+        type = addr >> 24;
+    else
+        type = addr >> 16;
+    if (type & 0x80)
+        addr += ram.getLocalStackBp(); //???有可能越界，但也可以不检验
+
+    int32_t v = ram.readVariant(addr);
+    ram.writeVariant(addr, v + 1);
+    return v;
 }
 
-void LavaProc::lava_op_DEC(uint32_t ds0)
+uint32_t LavaProc::lava_op_DEC(uint32_t ds0)
 {
-    TODO();
+    int32_t addr = ds0;
+    uint8_t type = 0;
+    if (rambits > 16)
+        type = addr >> 24;
+    else
+        type = addr >> 16;
+    if (type & 0x80)
+        addr += ram.getLocalStackBp(); //???有可能越界，但也可以不检验
+
+    int32_t v = ram.readVariant(addr);
+    ram.writeVariant(addr, v - 1);
+    return v;
 }
 
 uint32_t LavaProc::lava_op_add(uint32_t ds0, uint32_t ds1)
@@ -241,31 +272,21 @@ uint32_t LavaProc::lava_op_let(uint32_t ds0, uint32_t ds1)
 {
     std::cerr << "PROC_TODO: " << __FUNCSIG__ << std::endl;
 
-    int32_t a3 = ds0;
-    int32_t a1 = ds1;
+    int32_t v = ds0;
+    int32_t a = ds1;
 
-	int32_t t,t1;
+    uint8_t type = 0;
+    if (rambits > 16)
+        type = a >> 24;
+    else
+        type = a >> 16;
+
     uint32_t local_bp = ram.getLocalStackBp();
+    if (type & 0x80)
+        a += local_bp; //???有可能越界，但也可以不检验
 
-	if (rambits>16) {
-		if (a1&0x80000000) t1=(a1+local_bp)&0xffffff; //???有可能越界，但也可以不检验
-		else t1=a1&0xffffff;
-		t=(a1>>24)&0x7f;
-	} else {
-		if (a1&0x800000) t1=(a1+local_bp)&0xffff; //???有可能越界，但也可以不检验
-		else t1=a1&0xffff;
-		t=(a1>>16)&0x7f;
-	}
-
-	if (t==1)
-        ram.writeU8(t1, a3 & 0xff);
-	else if (t==2)
-        ram.writeI16(t1, a3 & 0xffff);
-	else
-        ram.writeI32(t1, a3);
-
-	a1=a3;
-    return a1;
+    ram.writeVariant(a, v);
+    return v;
 }
 
 void LavaProc::lava_op_pop(uint32_t ds0)
@@ -275,7 +296,7 @@ void LavaProc::lava_op_pop(uint32_t ds0)
 
 void LavaProc::lava_op_jmpe(uint32_t ds0)
 {
-    if (flagv)
+    if (!flagv)
         pc = ds0;
 }
 
@@ -293,50 +314,50 @@ void LavaProc::lava_op_add_bp(uint32_t dp0, uint8_t dp1)
 {
     std::cerr << "PROC_TODO: " << __FUNCSIG__ << std::endl;
 
-	int32_t t;
-	uint8_t t2;
-	int32_t i;
+    int32_t t;
+    uint8_t t2;
+    int32_t i;
     uint32_t local_bp = ram.getLocalStackBp();
     uint32_t local_sp = ram.getLocalStack();
     uint32_t eval_top = ram.getStack();
 
-	t=local_bp;
-	local_bp=local_sp;
+    t=local_bp;
+    local_bp=local_sp;
 
     ram.writeU8(local_bp+3, t & 0xff);
     ram.writeU8(local_bp+4, (t>>8) & 0xff);
-	if (rambits > 16)
+    if (rambits > 16)
         ram.writeU8(local_bp+5, (t>>16) & 0xff);
 
     t = dp0;
-	local_sp=local_bp+(t&0xffffff);
-	//if (local_sp&3) local_sp+=4-(local_sp&3); //令堆栈开始于4字节边界
+    local_sp=local_bp+(t&0xffffff);
+    //if (local_sp&3) local_sp+=4-(local_sp&3); //令堆栈开始于4字节边界
 
-	t = dp1 * 4;
-	if (t) {
-		eval_top -= t;
-		t2 = eval_top;
-		i=0;
-		if (rambits == 32) {
-			while (t) {
+    t = dp1 * 4;
+    if (t) {
+        eval_top -= t;
+        t2 = eval_top;
+        i=0;
+        if (rambits == 32) {
+            while (t) {
                 uint8_t v = ram.readU8(LAVA_STACK_OFFSET + t2++);
                 ram.writeU8(local_bp+8+i++, v);
-				t--;
-			}
-		} else if (rambits > 16) {
-			while (t) {
+                t--;
+            }
+        } else if (rambits > 16) {
+            while (t) {
                 uint8_t v = ram.readU8(LAVA_STACK_OFFSET + t2++);
                 ram.writeU8(local_bp+6+i++, v);
-				t--;
-			}
-		} else {
-			while (t) {
+                t--;
+            }
+        } else {
+            while (t) {
                 uint8_t v = ram.readU8(LAVA_STACK_OFFSET + t2++);
                 ram.writeU8(local_bp+5+i++, v);
-				t--;
-			}
-		}
-	}
+                t--;
+            }
+        }
+    }
 
     ram.setLocalStackBp(local_bp);
     ram.setLocalStack(local_sp);
@@ -394,13 +415,20 @@ uint32_t LavaProc::lava_op_qless(int16_t dp0, uint32_t ds0)
     return (int32_t)ds0 < (int32_t)dp0 ? Lava::True : Lava::False;
 }
 
-void LavaProc::lava_op_getchar()
+uint32_t LavaProc::lava_op_getchar()
 {
-    TODO();
+    if (req.resp & proc_req_t::RespGetchar) {
+        ram.pop();  // Pop the value inserted before resp was ready
+        return req.resp_value;
+    } else {
+        req.req |= proc_req_t::ReqGetchar;
+        return 0;
+    }
 }
 
 uint32_t LavaProc::lava_op_strlen(uint32_t ds0)
 {
+    std::cerr << "PROC_TODO: " << __FUNCSIG__ << std::endl;
     TODO();
     return 0;
 }
@@ -408,7 +436,8 @@ uint32_t LavaProc::lava_op_strlen(uint32_t ds0)
 void LavaProc::lava_op_delay(uint32_t ds0)
 {
     uint32_t delay_ms = ds0 > 0x7fff ? 0x7fff : ds0;
-    TODO();
+    req.req |= proc_req_t::ReqDelay;
+    req.req_value = delay_ms;
 }
 
 void LavaProc::lava_op_writeblock()
@@ -418,7 +447,7 @@ void LavaProc::lava_op_writeblock()
 
 void LavaProc::lava_op_scroll()
 {
-    TODO();
+    disp->framebufferSwap();
 }
 
 void LavaProc::lava_op_textout(uint32_t ds0, uint32_t ds1, uint32_t ds2, uint32_t ds3)
@@ -428,16 +457,13 @@ void LavaProc::lava_op_textout(uint32_t ds0, uint32_t ds1, uint32_t ds2, uint32_
 
 void LavaProc::lava_op_block(uint32_t ds0, uint32_t ds1, uint32_t ds2, uint32_t ds3, uint32_t ds4)
 {
-    //std::cerr << "PROC_TODO: " << __FUNCSIG__ << std::endl;
-    //std::cerr << std::hex << ds0 << ", " << ds1 << ", " << ds2 << ", " << ds3 << ", " << ds4 << std::endl;
+    uint8_t no_buf = ds0 & 0x40;
+    uint8_t cmd = ds0 & 3;
 
-	uint8_t no_buf = ds0 & 0x40;
-	uint8_t cmd = ds0 & 3;
-
-	uint16_t y1 = ds1;
-	uint16_t x1 = ds2;
-	uint16_t y0 = ds3;
-	uint16_t x0 = ds4;
+    uint16_t y1 = ds1;
+    uint16_t x1 = ds2;
+    uint16_t y0 = ds3;
+    uint16_t x0 = ds4;
 
     disp->drawBlock(x0, x1, y0, y1, cmd, no_buf);
 }
@@ -449,7 +475,8 @@ void LavaProc::lava_op_rectangle()
 
 void LavaProc::lava_op_exit(uint32_t ds0)
 {
-    TODO();
+    req.req |= proc_req_t::ReqExit;
+    req.req_value = ds0;
 }
 
 void LavaProc::lava_op_clearscreen()
@@ -484,9 +511,16 @@ void LavaProc::lava_op_sprintf()
     TODO();
 }
 
-void LavaProc::lava_op_checkkey()
+uint32_t LavaProc::lava_op_checkkey(uint32_t ds0)
 {
-    TODO();
+    PROC_TODO();
+    if (req.resp & proc_req_t::RespGetchar) {
+        ram.pop();  // Pop the value inserted before resp was ready
+        return req.resp_value;
+    } else {
+        req.req |= proc_req_t::ReqGetchar;
+        return 0;
+    }
 }
 
 uint32_t LavaProc::lava_op_setgraphmode(uint32_t ds0)

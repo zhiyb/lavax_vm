@@ -14,7 +14,7 @@ public:
     enum mode_t {
         GraphicInvalid = 0,
         GraphicMono    = 1,
-        Graphic4       = 4,
+        Graphic16      = 4,
         Graphic256     = 8,
     };
 

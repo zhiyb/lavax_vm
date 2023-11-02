@@ -15,22 +15,36 @@ class LavaProc
 {
 public:
     LavaProc() {}
-
     void setDisp(LavaDisp *disp) {this->disp = disp;}
 
     bool load(const std::vector<uint8_t> &source, uint32_t rambits, bool pen_input);
-    uint32_t parse(uint32_t ofs);
 
     const std::vector<uint8_t> &inspectRam() {return ram.data();}
 
-    enum proc_req_t {
-        ReqNone    = 0x00,
-        ReqRefresh = 0x01,
+    struct proc_req_t {
+        enum proc_req_type_t {
+            ReqNone    = 0,
+            ReqRefresh = 1 << 0,
+            ReqDelay   = 1 << 1,
+            ReqGetchar = 1 << 2,
+            ReqExit    = 1 << 3,
+        };
+        uint32_t req;
+        uint32_t req_value;
+
+        enum proc_resp_type_t {
+            RespNone    = 0,
+            RespGetchar = 1 << 0,
+        };
+        uint32_t resp;
+        uint32_t resp_value;
     };
 
-    proc_req_t run();
+    proc_req_t &run();
 
 private:
+    uint32_t parse(uint32_t ofs);
+
 #include "lava_op_defs.h"
 
     // Opcode length including params
@@ -61,8 +75,9 @@ private:
     LavaDisp *disp;
     LavaRam ram;
     std::vector<uint8_t> source;
+    proc_req_t req;
 
-    uint32_t rambits;
+    uint32_t rambits, ram_mask;
     bool pen_input;
 
     uint32_t pc;

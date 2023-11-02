@@ -15,12 +15,25 @@ public:
         False = 0x00000000,
     };
 
+    enum key_t {
+        KeyUp    = 20,
+        KeyDown  = 21,
+        KeyRight = 22,
+        KeyLeft  = 23,
+        KeyF1    = 28,
+        KeyF2    = 29,
+        KeyEnter = 13,
+        KeySpace = 20,
+        KeyHelp  = 25,
+        KeyEsc   = 27,
+    };
+
     Lava();
 
     bool load(const std::vector<uint8_t> &source);
     void loadLvmBin(const std::vector<uint8_t> &data) {disp.loadLvmBin(data);}
 
-    LavaProc::proc_req_t run() {return proc.run();}
+    LavaProc::proc_req_t &run() {return proc.run();}
 
     const std::vector<uint8_t> &inspectRam() {return proc.inspectRam();}
 

@@ -67,6 +67,41 @@ public:
     }
     void writeI32(uint32_t a, int32_t v) {writeU32(a, v);}
 
+    uint32_t readVariant(uint32_t a)
+    {
+        uint8_t type;
+        if (ram_bits <= 16)
+            type = a >> 16;
+        else
+            type = a >> 24;
+
+        type &= 0x7f;
+        a &= ram_mask;
+        if (type == 1)
+            return readU8(a);
+        else if (type == 2)
+            return readI16(a);
+        else
+            return readI32(a);
+    }
+    void writeVariant(uint32_t a, uint32_t v)
+    {
+        uint8_t type;
+        if (ram_bits <= 16)
+            type = a >> 16;
+        else
+            type = a >> 24;
+
+        type &= 0x7f;
+        a &= ram_mask;
+        if (type == 1)
+            writeU8(a, v);
+        else if (type == 2)
+            writeI16(a, v);
+        else
+            writeI32(a, v);
+    }
+
     std::vector<uint8_t> readString(uint32_t a)
     {
         std::vector<uint8_t> str;
@@ -89,6 +124,7 @@ public:
 
 private:
     std::vector<uint8_t> ram;
+    uint32_t ram_bits, ram_mask;
     uint32_t stack, stack_string;
     uint32_t stack_local, stack_local_bp;
 };
