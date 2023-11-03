@@ -21,15 +21,6 @@
 
 #define RESET_KEY_F5 1
 
-static struct {
-    struct {
-        GLuint fb;
-    } texture;
-    struct {
-        GLint mode;
-    } uniform;
-} gl_data;
-
 // Lava stuff
 
 static Lava lava;
@@ -396,6 +387,17 @@ static void gl_idle()
 
 // OpenGL stuff
 
+static struct {
+    struct {
+        GLuint fb;
+        GLuint palette;
+    } texture;
+    struct {
+        GLint mode;
+    } uniform;
+    LavaDisp::mode_t mode = (LavaDisp::mode_t)0;    // Invalid mode
+} gl_data;
+
 static std::string gl_get_shader_info_log(GLuint shader)
 {
     GLchar log[512];
@@ -424,11 +426,52 @@ static GLuint gl_compile_shader(GLenum type, GLchar *source)
     return shader;
 }
 
+struct {
+    std::vector<uint8_t> c2, c16, c256;
+} palette;
+
 static void load_palettes()
 {
+    // Default palettes
+    palette.c2 = {
+        0xff, 0xff, 0xff,
+        0x00, 0x00, 0x00,
+    };
+
+    for (int i = 15; i >= 0; i--) {
+        uint8_t c = i * 255 / 15;
+        palette.c16.push_back(c);
+        palette.c16.push_back(c);
+        palette.c16.push_back(c);
+    }
+
+    for (int c = 255; c >= 0; c--) {
+        palette.c256.push_back(c);
+        palette.c256.push_back(c);
+        palette.c256.push_back(c);
+    }
+
+    // Optional palette images
     int x = 0, y = 0;
-    uint8_t *pdata = stbi_load("palette16.png", &x, &y, nullptr, 3);
-    stbi_image_free(pdata);
+    uint8_t *pdata = nullptr;
+
+    pdata = stbi_load("palette2.png", &x, &y, nullptr, 3);
+    if (pdata && x >= 2) {
+        palette.c2 = std::vector<uint8_t>(pdata, pdata + 2 * 3);
+        stbi_image_free(pdata);
+    }
+
+    pdata = stbi_load("palette16.png", &x, &y, nullptr, 3);
+    if (pdata && x >= 16) {
+        palette.c16 = std::vector<uint8_t>(pdata, pdata + 16 * 3);
+        stbi_image_free(pdata);
+    }
+
+    pdata = stbi_load("palette256.png", &x, &y, nullptr, 3);
+    if (pdata && x >= 256) {
+        palette.c256 = std::vector<uint8_t>(pdata, pdata + 256 * 3);
+        stbi_image_free(pdata);
+    }
 }
 
 static void gl_init()
@@ -457,6 +500,7 @@ void main()
 uniform uint mode;
 
 uniform sampler2D tex;
+uniform sampler1D palette;
 
 in vec2 vMap;
 out vec4 colour;
@@ -464,9 +508,14 @@ out vec4 colour;
 void main()
 {
     float v = texture(tex, vMap).r;
-    v = v * 255. / (mode - 1u);
-    v = 1. - v;
-    colour = vec4(v, v, v, 1.);
+    // Invert colour
+    //v = float(mode - 1u) / 255. - v;
+    // Scale to palette texture pixel centre
+    const float delta = 1. / 256.;
+    v = v * (1. - delta) + delta / 2.;
+    // Map palette
+    vec3 plt = texture(palette, v).rgb;
+    colour = vec4(plt.rgb, 1.);
 }
     )"));
 
@@ -501,23 +550,42 @@ void main()
     glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, sizeof(glm::vec2), 0);
     glEnableVertexAttribArray(0);
 
-    // Texture and sampler
-    glGenTextures(1, &gl_data.texture.fb);
-    glBindTexture(GL_TEXTURE_2D, gl_data.texture.fb);
-    glTextureStorage2D(gl_data.texture.fb, 1, GL_R8, lava.getFramebufferWidth(), lava.getFramebufferHeight());
-    glPixelStorei(GL_UNPACK_ROW_LENGTH, lava.getFramebufferStride());
-    glTextureSubImage2D(gl_data.texture.fb, 0,
-                        0, 0, lava.getFramebufferWidth(), lava.getFramebufferHeight(),
-                        GL_RED, GL_UNSIGNED_BYTE, lava.getFramebuffer());
-    gl_data.uniform.mode = glGetUniformLocation(program, "mode");
-    glUniform1ui(gl_data.uniform.mode, 1u << lava.getGraphicMode());
-
+    // Textures and samplers
+    GLuint tex;
     const size_t nsamplers = 1;
     GLuint sampler[nsamplers];
     glGenSamplers(nsamplers, sampler);
+
     glSamplerParameteri(sampler[0], GL_TEXTURE_MIN_FILTER, GL_NEAREST);
     glSamplerParameteri(sampler[0], GL_TEXTURE_MAG_FILTER, GL_NEAREST);
     glBindSampler(0, sampler[0]);
+
+    // Texture: frame buffer
+    glGenTextures(1, &tex);
+    glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_2D, tex);
+    glTextureStorage2D(tex, 1, GL_R8, lava.getFramebufferWidth(), lava.getFramebufferHeight());
+    glPixelStorei(GL_UNPACK_ROW_LENGTH, lava.getFramebufferStride());
+    glTextureParameteri(tex, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTextureParameteri(tex, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    glTextureSubImage2D(tex, 0, 0, 0,
+                        lava.getFramebufferWidth(), lava.getFramebufferHeight(),
+                        GL_RED, GL_UNSIGNED_BYTE, lava.getFramebuffer());
+    gl_data.texture.fb = tex;
+
+    // Texture: palette
+    glGenTextures(1, &tex);
+    glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_1D, tex);
+    glTextureStorage1D(tex, 1, GL_RGB8, 256);
+    glTextureParameteri(tex, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTextureSubImage1D(tex, 0, 0, 256,
+                        GL_RGB, GL_UNSIGNED_BYTE, palette.c256.data());
+    gl_data.texture.palette = tex;
+
+    // Global uniform data
+    gl_data.uniform.mode = glGetUniformLocation(program, "mode");
+    glUniform1ui(gl_data.uniform.mode, 256);
 
     // Clear screen
     glClearColor(0.4, 0.8, 1., 1.);
@@ -526,7 +594,22 @@ void main()
 
 void Callback::refresh(uint8_t *framebuffer)
 {
-    glUniform1ui(gl_data.uniform.mode, 1u << lava.getGraphicMode());
+    if (lava.getGraphicMode() != gl_data.mode) {
+        gl_data.mode = lava.getGraphicMode();
+        uint8_t gl_mode = 1u << gl_data.mode;
+        glUniform1ui(gl_data.uniform.mode, gl_mode);
+
+        const uint8_t *plt = palette.c2.data();
+        if (gl_mode == 16)
+            plt = palette.c16.data();
+        else if (gl_mode == 256)
+            plt = palette.c256.data();
+
+        GLuint tex = gl_data.texture.palette;
+        glTextureSubImage1D(tex, 0, 0, gl_mode,
+                            GL_RGB, GL_UNSIGNED_BYTE, plt);
+    }
+
     glTextureSubImage2D(gl_data.texture.fb, 0,
                         0, 0, lava.getFramebufferWidth(), lava.getFramebufferHeight(),
                         GL_RED, GL_UNSIGNED_BYTE, lava.getFramebuffer());
