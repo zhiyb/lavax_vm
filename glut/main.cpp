@@ -48,6 +48,7 @@ public:
     virtual uint8_t fopen(std::string path, std::string mode);
     virtual void fclose(uint8_t fd);
     virtual std::vector<uint8_t> fread(uint8_t fd, uint32_t size);
+    virtual int32_t fwrite(uint8_t fd, const std::vector<uint8_t> &data);
 
 private:
     bool delay_pending = false;
@@ -176,7 +177,7 @@ uint8_t Callback::fopen(std::string path, std::string mode)
             fmode |= std::ios::in;
             break;
         case 'w':
-            fmode |= std::ios::out;
+            fmode |= std::ios::out | std::ios::trunc;
             break;
         case '+':
             fmode |= std::ios::in | std::ios::out;
@@ -211,6 +212,15 @@ std::vector<uint8_t> Callback::fread(uint8_t fd, uint32_t size)
     data.resize(size);
     data.resize(it->second.rdbuf()->sgetn(reinterpret_cast<char *>(data.data()), size));
     return data;
+}
+
+int32_t Callback::fwrite(uint8_t fd, const std::vector<uint8_t> &data)
+{
+    auto it = lava_state.file_map.find(fd);
+    if (it == lava_state.file_map.end())
+        return 0;
+    it->second.write(reinterpret_cast<const char *>(data.data()), data.size());
+    return data.size();
 }
 
 void Callback::fclose(uint8_t fd)
@@ -290,6 +300,28 @@ int32_t Callback::check_key(uint8_t key)
 
 // LAVA main loop
 
+void lava_dump()
+{
+    // Dump RAM content
+    auto const &ram = lava.inspectRam();
+    std::ofstream f_ram_dump;
+    f_ram_dump.open("ram.bin", std::ios::binary | std::ios::out);
+    f_ram_dump.write(reinterpret_cast<const char *>(ram.data()), ram.size());
+    f_ram_dump.close();
+    std::cerr << "RAM dump: ram.bin" << std::endl;
+
+    // Force a framebuffer swap then dump
+    lava.framebufferSwap();
+    auto fb = lava.getFramebuffer();
+    std::ofstream f_fb_dump;
+    f_fb_dump.open("fb.bin", std::ios::binary | std::ios::out);
+    f_fb_dump.write(reinterpret_cast<const char *>(fb),
+                    LAVA_MAX_HEIGHT * LAVA_MAX_WIDTH);
+    f_fb_dump.close();
+    std::cerr << "FB dump: fb.bin" << std::endl;
+    gl_refresh();
+}
+
 void gl_idle()
 {
     try {
@@ -298,25 +330,7 @@ void gl_idle()
 
     } catch (const std::exception &e) {
         std::cerr << e.what() << std::endl;
-
-        // Dump RAM content
-        auto const &ram = lava.inspectRam();
-        std::ofstream f_ram_dump;
-        f_ram_dump.open("ram.bin", std::ios::binary | std::ios::out);
-        f_ram_dump.write(reinterpret_cast<const char *>(ram.data()), ram.size());
-        f_ram_dump.close();
-        std::cerr << "RAM dump: ram.bin" << std::endl;
-
-        // Force a framebuffer swap then dump
-        lava.framebufferSwap();
-        auto fb = lava.getFramebuffer();
-        std::ofstream f_fb_dump;
-        f_fb_dump.open("fb.bin", std::ios::binary | std::ios::out);
-        f_fb_dump.write(reinterpret_cast<const char *>(fb),
-                        LAVA_MAX_HEIGHT * LAVA_MAX_WIDTH);
-        f_fb_dump.close();
-        std::cerr << "FB dump: fb.bin" << std::endl;
-        gl_refresh();
+        lava_dump();
 
         lava_state.run = false;
         lava_state.ret_code = -1;

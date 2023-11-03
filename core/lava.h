@@ -25,6 +25,7 @@ public:
     virtual uint8_t fopen(std::string path, std::string mode) = 0;
     virtual void fclose(uint8_t fd) = 0;
     virtual std::vector<uint8_t> fread(uint8_t fd, uint32_t size) = 0;
+    virtual int32_t fwrite(uint8_t fd, const std::vector<uint8_t> &data) = 0;
 };
 
 class Lava

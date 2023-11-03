@@ -27,6 +27,10 @@ public:
 
 private:
     uint32_t parse(uint32_t ofs);
+    std::string to_string(const std::vector<uint8_t> &data)
+    {
+        return std::string(reinterpret_cast<const char *>(data.data()), data.size() - 1);
+    }
 
 #include "lava_op_defs.h"
 

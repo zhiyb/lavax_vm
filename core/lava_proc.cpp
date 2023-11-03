@@ -93,6 +93,7 @@ void LavaProc::run()
 
     std::cerr << std::showbase << std::internal << std::setfill('0');
     std::cerr << std::hex << std::setw(10) << pc << ": ";
+    std::cerr << ram.getStack() << "/" << ram.getLocalStack() << "/" << ram.getLocalStackBp() << ": ";
     std::cerr << op_info[op.opcode].name;
 
     std::stringstream dss;
@@ -471,7 +472,13 @@ void LavaProc::lava_op_scroll()
 
 void LavaProc::lava_op_textout(uint32_t ds0, uint32_t ds1, uint32_t ds2, uint32_t ds3)
 {
-    disp->drawText(ram.readStringData(ds1), ds3, ds2, ds0);
+    uint8_t cfg = ds0;
+    uint32_t addr = ds1;
+    uint16_t x = ds3;
+    uint16_t y = ds2;
+    auto const &str = ram.readStringData(addr);
+    //std::cerr << __func__ << ": " << addr << ", " << str.size() << std::endl;
+    disp->drawText(str, x, y, cfg);
 }
 
 void LavaProc::lava_op_block(uint32_t ds0, uint32_t ds1, uint32_t ds2, uint32_t ds3, uint32_t ds4)
@@ -506,8 +513,8 @@ void LavaProc::lava_op_clearscreen()
 
 uint32_t LavaProc::lava_op_fopen(uint32_t ds0, uint32_t ds1)
 {
-    auto const &path = ram.readString(ds1);
-    auto const &mode = ram.readString(ds0);
+    auto const &path = to_string(ram.readStringData(ds1));
+    auto const &mode = to_string(ram.readStringData(ds0));
     return cb->fopen(path, mode);
 }
 
@@ -524,13 +531,17 @@ uint32_t LavaProc::lava_op_fread(uint32_t ds0, uint32_t ds1, uint32_t ds2, uint3
 
     auto const &data = cb->fread(fd, size);
     ram.writeData(addr, data);
-    //std::cerr << (int)fd << ", " << size << ", " << addr << ", " << data.size() << std::endl;
     return data.size();
 }
 
-void LavaProc::lava_op_fwrite()
+uint32_t LavaProc::lava_op_fwrite(uint32_t ds0, uint32_t ds1, uint32_t ds2, uint32_t ds3)
 {
-    TODO();
+    uint8_t fd = ds0;
+    uint32_t size = ds1 * ds2;
+    uint32_t addr = ds3;
+
+    auto const &data = ram.readData(addr, size);
+    return cb->fwrite(fd, data);
 }
 
 void LavaProc::lava_op_sprintf(uint32_t ds0)
@@ -540,15 +551,16 @@ void LavaProc::lava_op_sprintf(uint32_t ds0)
     for (int i = 0; i < nparams; i++)
         params.push_back(ram.pop());
 
-    auto const &fmt = ram.readString(ram.pop());
+    auto const &fmt = ram.readStringData(ram.pop());
     uint32_t dst = ram.pop();
 
-    std::string out;
+    std::vector<uint8_t> out;
     int iparam = 0;
     for (int i = 0; i < fmt.size(); i++) {
         // Process the format string
         char cfmt = fmt[i];
         if (cfmt == '\0') {
+            out.push_back('\0');
             break;
         } else if (cfmt != '%') {
             // Normal character
@@ -596,7 +608,7 @@ void LavaProc::lava_op_sprintf(uint32_t ds0)
                 else
                     sval = sval + sfill;
             }
-            out = out + sval;
+            out.insert(out.end(), sval.cbegin(), sval.cend());
         } else if (cfmt == 'f') {
             TODO();
             out.push_back(cfmt);
@@ -615,9 +627,8 @@ void LavaProc::lava_op_sprintf(uint32_t ds0)
         }
     }
 
-    //std::cerr << fmt << ": " << out << std::endl;
-
-    ram.writeString(dst, out);
+    ram.writeStringData(dst, out);
+    //std::cerr << __func__ << ": " << dst << ", " << (char *)out.data() << std::endl;
 }
 
 uint32_t LavaProc::lava_op_checkkey(uint32_t ds0)

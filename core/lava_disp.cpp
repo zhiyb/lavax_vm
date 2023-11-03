@@ -155,7 +155,7 @@ void LavaDisp::drawBlock(uint16_t x, uint16_t y, uint16_t w, uint16_t h, uint8_t
     uint32_t ofs = 0;
     for (uint32_t dy = 0; dy < h; dy++) {
         for (uint32_t dx = 0; dx < w; dx++) {
-            uint8_t v = ((data[ofs / 8] >> (ofs % 8)) & mask) ^ inv;
+            uint8_t v = ((data[ofs / 8] >> (8 - bits - (ofs % 8))) & mask) ^ inv;
             uint32_t xx = hflip ? w - 1 - dx : dx;
             framebuffer[fb_active][y + dy][x + xx] = v;
             ofs += bits;

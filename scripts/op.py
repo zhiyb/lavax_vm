@@ -65,7 +65,7 @@ op = {
     0xae: ("fopen",        PARAM_NONE,    2, 1),
     0xaf: ("fclose",       PARAM_NONE,    1, 0),
     0xb0: ("fread",        PARAM_NONE,    4, 1),
-    0xb1: ("fwrite",       PARAM_NONE,    0, 0),
+    0xb1: ("fwrite",       PARAM_NONE,    4, 1),
     0xb8: ("sprintf",      PARAM_NONE,    1, 0),
     0xbc: ("checkkey",     PARAM_NONE,    1, 1),
     0xcb: ("setgraphmode", PARAM_NONE,    1, 1),

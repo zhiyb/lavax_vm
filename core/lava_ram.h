@@ -17,6 +17,14 @@ public:
     std::vector<uint8_t> &data() {return ram;}
 
 
+    uint32_t getStack() {return stack;}
+    void setStack(uint32_t a) {stack = a;}
+    uint32_t getLocalStack() {return stack_local;}
+    void setLocalStack(uint32_t a) {stack_local = a;}
+    uint32_t getLocalStackBp() {return stack_local_bp;}
+    void setLocalStackBp(uint32_t a) {stack_local_bp = a;}
+
+
     void push(uint32_t v)
     {
         ram.at(stack + 0) = (uint8_t)(v >>  0);
@@ -114,19 +122,9 @@ public:
         std::copy(data.cbegin(), data.cend(), ram.begin() + a);
     }
 
-    void writeString(uint32_t a, const std::string &str)
-    {
-        std::copy(str.cbegin(), str.cend(), ram.begin() + a);
-        ram[a + str.size()] = '\0';
-    }
     void writeStringData(uint32_t a, const std::vector<uint8_t> &str)
     {
         std::copy(str.cbegin(), str.cend(), ram.begin() + a);
-    }
-    std::string readString(uint32_t a)
-    {
-        auto const &data = readStringData(a);
-        return std::string(reinterpret_cast<const char *>(data.data()), data.size() - 1);
     }
     std::vector<uint8_t> readStringData(uint32_t a)
     {
@@ -144,14 +142,6 @@ public:
         for (; ram[a + len] != '\0'; len++);
         return len;
     }
-
-
-    uint32_t getStack() {return stack;}
-    void setStack(uint32_t a) {stack = a;}
-    uint32_t getLocalStack() {return stack_local;}
-    void setLocalStack(uint32_t a) {stack_local = a;}
-    uint32_t getLocalStackBp() {return stack_local_bp;}
-    void setLocalStackBp(uint32_t a) {stack_local_bp = a;}
 
 
 private:

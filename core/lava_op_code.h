@@ -478,9 +478,12 @@ void LavaProc::lava_wrap_fread(const std::vector<uint8_t> &data)
 
 void LavaProc::lava_wrap_fwrite(const std::vector<uint8_t> &data)
 {
-
-    lava_op_fwrite();
-    ;
+    uint32_t ds0 = ram.pop();
+    uint32_t ds1 = ram.pop();
+    uint32_t ds2 = ram.pop();
+    uint32_t ds3 = ram.pop();
+    uint32_t ret = lava_op_fwrite(ds0, ds1, ds2, ds3);
+    ram.push(ret);
 }
 
 void LavaProc::lava_wrap_sprintf(const std::vector<uint8_t> &data)

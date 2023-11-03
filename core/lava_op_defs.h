@@ -162,7 +162,7 @@ void lava_wrap_fread(const std::vector<uint8_t> &data);
 uint32_t lava_op_fread(uint32_t ds0, uint32_t ds1, uint32_t ds2, uint32_t ds3);
 
 void lava_wrap_fwrite(const std::vector<uint8_t> &data);
-void lava_op_fwrite();
+uint32_t lava_op_fwrite(uint32_t ds0, uint32_t ds1, uint32_t ds2, uint32_t ds3);
 
 void lava_wrap_sprintf(const std::vector<uint8_t> &data);
 void lava_op_sprintf(uint32_t ds0);
