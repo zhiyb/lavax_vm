@@ -18,13 +18,14 @@ public:
     std::vector<uint8_t> &data() {return ram;}
 
     uint32_t getAddrMask() {return ram_mask;}
+    uint32_t getAddrBytes() {return ram_bits <= 16 ? 2 : 3;}
 
     uint32_t getStack() {return stack;}
     void setStack(uint32_t a) {stack = a;}
-    uint32_t getLocalStack() {return stack_local;}
-    void setLocalStack(uint32_t a) {stack_local = a;}
-    uint32_t getLocalStackBp() {return stack_local_bp;}
-    void setLocalStackBp(uint32_t a) {stack_local_bp = a;}
+    uint32_t getFuncStackEnd() {return stack_local;}
+    void setFuncStackEnd(uint32_t a) {stack_local = a;}
+    uint32_t getFuncStackStart() {return stack_local_bp;}
+    void setFuncStackStart(uint32_t a) {stack_local_bp = a;}
 
 
     void push(uint32_t v)
@@ -44,13 +45,6 @@ public:
         v |= ram.at(stack + 2) << 16;
         v |= ram.at(stack + 3) << 24;
         return v;
-    }
-
-    void pushInst(uint32_t a)
-    {
-        ram.at(stack_local + 0) = a >>  0;
-        ram.at(stack_local + 1) = a >>  8;
-        ram.at(stack_local + 2) = a >> 16;
     }
 
     uint32_t pushString(const std::vector<uint8_t> &dstr);
@@ -79,10 +73,23 @@ public:
         ram[a + 1] = (uint32_t)v >> 8;
     }
 
+    uint32_t readU24(uint32_t a)
+    {
+        a &= ram_mask;
+        return ram[a] | (ram[a + 1] << 8) | (ram[a + 2] << 16);
+    }
+    void writeU24(uint32_t a, uint32_t v)
+    {
+        a &= ram_mask;
+        ram[a + 0] = v >>  0;
+        ram[a + 1] = v >>  8;
+        ram[a + 2] = v >> 16;
+    }
+
     uint32_t readU32(uint32_t a)
     {
         a &= ram_mask;
-        return (int32_t)(ram[a] | (ram[a + 1] << 8) | (ram[a + 2] << 16) | (ram[a + 3] << 24));
+        return ram[a] | (ram[a + 1] << 8) | (ram[a + 2] << 16) | (ram[a + 3] << 24);
     }
     int32_t readI32(uint32_t a) {return readU32(a);}
     void writeU32(uint32_t a, uint32_t v)
@@ -94,6 +101,23 @@ public:
         ram[a + 3] = (uint32_t)v >> 24;
     }
     void writeI32(uint32_t a, int32_t v) {writeU32(a, v);}
+
+    uint32_t readAddr(uint32_t a)
+    {
+        a &= ram_mask;
+        if (ram_bits <= 16)
+            return ram[a] | (ram[a + 1] << 8);
+        else
+            return ram[a] | (ram[a + 1] << 8) | (ram[a + 2] << 16);
+    }
+    void writeAddr(uint32_t a, uint32_t v)
+    {
+        a &= ram_mask;
+        ram[a + 0] = (uint32_t)v >>  0;
+        ram[a + 1] = (uint32_t)v >>  8;
+        if (ram_bits > 16)
+            ram[a + 2] = (uint32_t)v >> 16;
+    }
 
     uint32_t getAddrVariant(uint32_t a, uint8_t type)
     {
@@ -190,8 +214,13 @@ private:
 
     std::vector<uint8_t> ram;
     uint32_t ram_bits, ram_mask;
-    uint32_t stack, stack_string;
+
+    // Function parameter data stack
+    uint32_t stack;
+    // Function stack frame
     uint32_t stack_local, stack_local_bp;
+    // String literal stack
+    uint32_t stack_string;
 
     // Stored pushed string constants
     std::unordered_map<std::string, uint32_t> str_map;

@@ -7,7 +7,7 @@
 #include "lava.h"
 #include "lava_proc.h"
 
-#define DEBUG_PRINT 0
+#define DEBUG_PRINT 1
 
 #define TODO()      throw std::runtime_error(std::string("PROC_TODO:") + std::to_string(__LINE__) + " " + __FUNCSIG__)
 #define PROC_TODO() std::cerr << "PROC_TODO: " << __FUNCSIG__ << std::endl
@@ -27,8 +27,9 @@ void LavaProc::load(const std::vector<uint8_t> &source, uint32_t rambits, bool p
     this->pen_input = pen_input;
 
     ram.init(rambits);
-    pc = 16;
+    pc = 16;    // Skip file header
 
+    // Parse and cache all instructions
     uint32_t ofs = pc;
     while (ofs < source.size()) {
         uint32_t s = parse(ofs);
@@ -41,17 +42,7 @@ void LavaProc::load(const std::vector<uint8_t> &source, uint32_t rambits, bool p
     for (auto const &op: op_exec) {
         std::cerr << std::showbase << std::internal << std::setfill('0');
         std::cerr << std::hex << std::setw(10) << op.first << ": ";
-        std::cerr << op_info[source[op.first]].name; // << std::endl;
-
-#if 0
-        std::stringstream dss;
-        for (auto const &v: op.second.data) {
-            dss << ", 0x";
-            dss << std::hex << std::setfill('0') << std::setw(2) << (uint32_t)v;
-        }
-        std::cerr << dss.str()
-#endif
-        std::cerr << std::endl;
+        std::cerr << op_info[source[op.first]].name << std::endl;
     }
 #endif
 }
@@ -115,8 +106,8 @@ void LavaProc::run()
     std::cerr << std::noshowbase << std::internal << std::setfill('0');
     std::cerr << std::hex << std::setw(8) << pc << " ";
     std::cerr << std::setw(4) << ram.getStack() << "-";
-    std::cerr << std::setw(4) << ram.getLocalStack() << "-";
-    std::cerr << std::setw(4) << ram.getLocalStackBp() << ": ";
+    std::cerr << std::setw(4) << ram.getFuncStackStart() << "-";
+    std::cerr << std::setw(4) << ram.getFuncStackEnd() << ": ";
     std::cerr << std::showbase;
 
 #endif
@@ -200,43 +191,43 @@ uint32_t LavaProc::lava_op_push_str(const std::vector<uint8_t> &dp0)
 
 uint32_t LavaProc::lava_op_pushlv_u8(uint32_t dp0)
 {
-    uint32_t addr = dp0 + ram.getLocalStackBp();
+    uint32_t addr = dp0 + ram.getFuncStackStart();
     return ram.readU8(addr);
 }
 
 uint32_t LavaProc::lava_op_pushlv_i16(uint32_t dp0)
 {
-    uint32_t addr = dp0 + ram.getLocalStackBp();
+    uint32_t addr = dp0 + ram.getFuncStackStart();
     return ram.readI16(addr);
 }
 
 uint32_t LavaProc::lava_op_pushlv_i32(uint32_t dp0)
 {
-    uint32_t addr = dp0 + ram.getLocalStackBp();
+    uint32_t addr = dp0 + ram.getFuncStackStart();
     return ram.readI32(addr);
 }
 
 uint32_t LavaProc::lava_op_pushlg_char(uint32_t dp0, uint32_t ds0)
 {
-    uint32_t addr = dp0 + ds0 + ram.getLocalStackBp();
+    uint32_t addr = dp0 + ds0 + ram.getFuncStackStart();
     return ram.readU8(addr);
 }
 
 uint32_t LavaProc::lava_op_pushla_u8(uint32_t dp0, uint32_t ds0)
 {
-    uint32_t a = dp0 + ds0 + ram.getLocalStackBp();
+    uint32_t a = dp0 + ds0 + ram.getFuncStackStart();
     return ram.getAddrVariant(a, 1);
 }
 
 uint32_t LavaProc::lava_op_pushla_i32(uint32_t dp0, uint32_t ds0)
 {
-    uint32_t a = dp0 + ds0 + ram.getLocalStackBp();
+    uint32_t a = dp0 + ds0 + ram.getFuncStackStart();
     return ram.getAddrVariant(a, 2);
 }
 
 uint32_t LavaProc::lava_op_pushl_i32(uint32_t dp0)
 {
-    uint32_t a = dp0 + ram.getLocalStackBp();
+    uint32_t a = dp0 + ram.getFuncStackStart();
     return a & ram.getAddrMask();
 }
 
@@ -309,18 +300,19 @@ uint32_t LavaProc::lava_op_lor(uint32_t ds0, uint32_t ds1)
 
 uint32_t LavaProc::lava_op_mul(uint32_t ds0, uint32_t ds1)
 {
-    return (uint32_t)((int32_t)ds1 * (int32_t)ds0);
+    return (int32_t)ds1 * (int32_t)ds0;
 }
 
 uint32_t LavaProc::lava_op_div(uint32_t ds0, uint32_t ds1)
 {
-    return (uint32_t)((int32_t)ds1 / (int32_t)ds0);
+    return (int32_t)ds1 / (int32_t)ds0;
 }
 
 uint32_t LavaProc::lava_op_mod(uint32_t ds0, uint32_t ds1)
 {
-    TODO();
-    return 0;
+    int32_t a3 = ds0;
+    int32_t a1 = ds1;
+    return a1 % a3;
 }
 
 uint32_t LavaProc::lava_op_equ(uint32_t ds0, uint32_t ds1)
@@ -371,112 +363,81 @@ void LavaProc::lava_op_pop(uint32_t ds0)
     flagv = ds0;
 }
 
-bool LavaProc::lava_op_jmpe(uint32_t dp0)
+void LavaProc::lava_op_jmpe(uint32_t dp0)
 {
     if (!flagv)
         pc = dp0;
-    return !flagv;
 }
 
-bool LavaProc::lava_op_jmpn(uint32_t dp0)
+void LavaProc::lava_op_jmpn(uint32_t dp0)
 {
     if (flagv)
         pc = dp0;
-    return flagv;
 }
 
-bool LavaProc::lava_op_jmp(uint32_t dp0)
+void LavaProc::lava_op_jmp(uint32_t dp0)
 {
     pc = dp0;
-    return true;
 }
 
 void LavaProc::lava_op_set_sp(uint32_t dp0)
 {
-    ram.setLocalStack(dp0);
+    ram.setFuncStackEnd(dp0);
 }
 
-bool LavaProc::lava_op_call(uint32_t dp0)
+void LavaProc::lava_op_call(uint32_t dp0)
 {
-    ram.pushInst(pc + 3);   // Address of the next instruction
-    return lava_op_jmp(dp0);
+    // Function call, first step, PC jump
+
+    // Write PC address of next instruction to next stack frame
+    ram.writeU24(ram.getFuncStackEnd(), pc);
+    lava_op_jmp(dp0);
 }
 
-void LavaProc::lava_op_add_bp(uint32_t dp0, uint8_t dp1)
+void LavaProc::lava_op_push_frame(uint32_t dp0, uint8_t dp1)
 {
-    std::cerr << "PROC_TODO: " << __FUNCSIG__ << std::endl;
+    // Function call, second step, update stack frame
 
-    int32_t t;
-    uint8_t t2;
-    int32_t i;
-    uint32_t local_bp = ram.getLocalStackBp();
-    uint32_t local_sp = ram.getLocalStack();
-    uint32_t eval_top = ram.getStack();
+    // PC address already written by previous call(), skip
+    uint32_t ofs = ram.getFuncStackEnd() + 3;
 
-    t=local_bp;
-    local_bp=local_sp;
+    // Write start of previous stack frame
+    ram.writeAddr(ofs, ram.getFuncStackStart());
+    ofs += ram.getAddrBytes();
 
-    ram.writeU8(local_bp+3, t & 0xff);
-    ram.writeU8(local_bp+4, (t>>8) & 0xff);
-    if (rambits > 16)
-        ram.writeU8(local_bp+5, (t>>16) & 0xff);
+    // Special offset for 32-bit mode?
+    if (rambits >= 32)
+        ofs += 1;
 
-    t = dp0;
-    local_sp=local_bp+(t&0xffffff);
-    //if (local_sp&3) local_sp+=4-(local_sp&3); //令堆栈开始于4字节边界
-
-    t = dp1 * 4;
-    if (t) {
-        eval_top -= t;
-        t2 = eval_top;
-        i=0;
-        if (rambits == 32) {
-            while (t) {
-                uint8_t v = ram.readU8(LAVA_STACK_OFFSET + t2++);
-                ram.writeU8(local_bp+8+i++, v);
-                t--;
-            }
-        } else if (rambits > 16) {
-            while (t) {
-                uint8_t v = ram.readU8(LAVA_STACK_OFFSET + t2++);
-                ram.writeU8(local_bp+6+i++, v);
-                t--;
-            }
-        } else {
-            while (t) {
-                uint8_t v = ram.readU8(LAVA_STACK_OFFSET + t2++);
-                ram.writeU8(local_bp+5+i++, v);
-                t--;
-            }
-        }
+    // Write stack frame variables
+    uint32_t nwords = dp1;
+    while (nwords--) {
+        uint32_t v = ram.pop();
+        ram.writeU32(ofs + nwords * 4, v);
     }
 
-    ram.setLocalStackBp(local_bp);
-    ram.setLocalStack(local_sp);
-    ram.setStack(eval_top);
+    // Update stack frame start & end pointers to current frame
+    uint32_t frame_size = dp0;
+    ram.setFuncStackStart(ram.getFuncStackEnd());
+    ram.setFuncStackEnd(ram.getFuncStackEnd() + frame_size);
 }
 
-void LavaProc::lava_op_sub_bp()
+void LavaProc::lava_op_pop_frame()
 {
-    ram.setLocalStack(ram.getLocalStackBp());
+    // Function call return
 
-    uint32_t t = 0;
-    t |= ram.readU8(ram.getLocalStackBp() + 0) <<  0;
-    t |= ram.readU8(ram.getLocalStackBp() + 1) <<  8;
-    t |= ram.readU8(ram.getLocalStackBp() + 2) << 16;
+    // Read current stack frame
+    uint32_t sp = ram.getFuncStackStart();
 
-    pc = t;
+    // Read and jump to return PC address
+    pc = ram.readU24(sp);
 
-    t = 0;
-    t |= ram.readU8(ram.getLocalStackBp() + 3) <<  0;
-    t |= ram.readU8(ram.getLocalStackBp() + 4) <<  8;
-    t |= ram.readU8(ram.getLocalStackBp() + 5) << 16;
-    t &= ram.getAddrMask();
+    // Read previous stack frame start
+    sp = ram.readAddr(sp + 3);
 
-    ram.setLocalStackBp(t);
-
-    PROC_TODO();
-    // if (func_top) cur_funcid=func_stack[--func_top];
+    // Update stack frame start & end pointers to previous frame
+    ram.setFuncStackEnd(ram.getFuncStackStart());
+    ram.setFuncStackStart(sp);
 }
 
 void LavaProc::lava_op_quit()
@@ -571,22 +532,6 @@ uint32_t LavaProc::lava_op_getchar()
     cb_func.func = std::bind(&LavaCallback::getchar, cb);
     cb_func.stack = true;
     return 0;
-}
-
-void LavaProc::lava_op_printf(uint32_t ds0)
-{
-    TODO();
-}
-
-void LavaProc::lava_op_strcpy(uint32_t ds0, uint32_t ds1)
-{
-    TODO();
-}
-
-uint32_t LavaProc::lava_op_strlen(uint32_t ds0)
-{
-    uint32_t addr = ds0;
-    return ram.strlen(addr);
 }
 
 void LavaProc::lava_op_setscreen(uint32_t ds0)
@@ -707,6 +652,22 @@ void LavaProc::lava_op_srand(uint32_t ds0)
 
 void LavaProc::lava_op_locate(uint32_t ds0, uint32_t ds1)
 {
+    uint8_t x = ds0;
+    uint8_t y = ds1;
+
+#if 0
+    uint8_t t;
+    t = x;
+
+    if (t>=curr_CPR) t=curr_CPR-1;
+    scr_x=t;
+
+    t = y;
+    if (t>=curr_RPS) t=curr_RPS-1;
+    scr_y=t;
+
+    scr_off=scr_y*curr_CPR+scr_x;
+#endif
     TODO();
 }
 
@@ -762,16 +723,34 @@ uint32_t LavaProc::lava_op_strstr(uint32_t ds0, uint32_t ds1)
     return 0;
 }
 
+void LavaProc::lava_op_strcpy(uint32_t ds0, uint32_t ds1)
+{
+    uint8_t *dst = ram.data().data() + (ds1 & ram.getAddrMask());
+    const uint8_t *src = ram.data().data() + (ds0 & ram.getAddrMask());
+    do
+        *dst = *src;
+    while (*src++ != 0);
+}
+
+uint32_t LavaProc::lava_op_strlen(uint32_t ds0)
+{
+    uint32_t addr = ds0;
+    return ram.strlen(addr);
+}
+
 void LavaProc::lava_op_memset(uint32_t ds0, uint32_t ds1, uint32_t ds2)
 {
-    TODO();
+    uint32_t len = ds0 & ram.getAddrMask();
+    uint8_t v = ds1;
+    uint32_t addr = ds2 & ram.getAddrMask();
+    std::fill(ram.data().begin() + addr, ram.data().begin() + addr + len, v);
 }
 
 void LavaProc::lava_op_memcpy(uint32_t ds0, uint32_t ds1, uint32_t ds2)
 {
-    int32_t len = ds0 & ram.getAddrMask();
-    int32_t src = ds1 & ram.getAddrMask();
-    int32_t dst = ds2 & ram.getAddrMask();
+    uint32_t len = ds0 & ram.getAddrMask();
+    uint32_t src = ds1 & ram.getAddrMask();
+    uint32_t dst = ds2 & ram.getAddrMask();
     std::copy(ram.data().begin() + src, ram.data().begin() + src + len,
               ram.data().begin() + dst);
 }

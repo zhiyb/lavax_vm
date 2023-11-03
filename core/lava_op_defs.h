@@ -129,25 +129,25 @@ void lava_wrap_pop(const std::vector<uint8_t> &data);
 inline void lava_op_pop(uint32_t ds0);
 
 void lava_wrap_jmpe(const std::vector<uint8_t> &data);
-inline bool lava_op_jmpe(uint32_t dp0);
+inline void lava_op_jmpe(uint32_t dp0);
 
 void lava_wrap_jmpn(const std::vector<uint8_t> &data);
-inline bool lava_op_jmpn(uint32_t dp0);
+inline void lava_op_jmpn(uint32_t dp0);
 
 void lava_wrap_jmp(const std::vector<uint8_t> &data);
-inline bool lava_op_jmp(uint32_t dp0);
+inline void lava_op_jmp(uint32_t dp0);
 
 void lava_wrap_set_sp(const std::vector<uint8_t> &data);
 inline void lava_op_set_sp(uint32_t dp0);
 
 void lava_wrap_call(const std::vector<uint8_t> &data);
-inline bool lava_op_call(uint32_t dp0);
+inline void lava_op_call(uint32_t dp0);
 
-void lava_wrap_add_bp(const std::vector<uint8_t> &data);
-inline void lava_op_add_bp(uint32_t dp0, uint8_t dp1);
+void lava_wrap_push_frame(const std::vector<uint8_t> &data);
+inline void lava_op_push_frame(uint32_t dp0, uint8_t dp1);
 
-void lava_wrap_sub_bp(const std::vector<uint8_t> &data);
-inline void lava_op_sub_bp();
+void lava_wrap_pop_frame(const std::vector<uint8_t> &data);
+inline void lava_op_pop_frame();
 
 void lava_wrap_quit(const std::vector<uint8_t> &data);
 inline void lava_op_quit();

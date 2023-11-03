@@ -1,5 +1,10 @@
 #pragma once
 
+void LavaProc::lava_op_printf(uint32_t ds0)
+{
+    TODO();
+}
+
 void LavaProc::lava_op_sprintf(uint32_t ds0)
 {
     uint32_t nparams = (uint8_t)ds0 - 2;

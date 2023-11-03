@@ -66,17 +66,47 @@ Data memory address pointer size: `u16` or `u24`.
 
 Little-endianness.
 
-Text buffer offset `0x1400`.
+### Data stack
 
-(Eval/generic) stack offset `0x1b00`.\
+Generally used for function parameters and return value.
+
+Eval/generic stack offset `0x1b00`.\
 Stack is 4-byte aligned.
 Stack size limit 256 bytes.
+
+### String literal stack
+
+Only used for string literals directly pushed from code data.
 
 String stack offset `0x1c00`.\
 String stack is 1-byte aligned.\
 String stack size limit 768 bytes, wraps around.
 
-Boolean values:\
+Stack stack only gets pushed with more and more data, never poped.\
+To avoid overflow, wrap around the string stack limit, or skip duplicated strings.
+
+### Function stack frame
+
+Function stack frame used for function calls.
+
+Generally the program will initialise stack frame pointer first.
+
+| Type | Name | Description |
+|---|---|---|
+| u24 | pc | PC address of next instruction |
+| addr | sp | Start of previous stack frame |
+| u32 | data0 | Stack data 0 |
+| u32 | data* | ... |
+| u32 | dataN | Stack data N |
+
+### LCD frame buffer
+
+Text buffer offset `0x1400`.
+
+TODO What is this?
+
+### Boolean values:
+
 `LTRUE = 0xffffffff = -1`\
 `LFALSE = 0`
 

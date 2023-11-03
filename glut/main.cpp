@@ -87,7 +87,7 @@ static std::unordered_map<int, uint8_t> key_map = {
     {' ',                          Lava::KeySpace},
 };
 
-void key_map_init()
+static void key_map_init()
 {
     for (char c = 'a'; c <= 'z'; c++)
         key_map[c] = c;
@@ -95,7 +95,7 @@ void key_map_init()
         key_map[c] = c;
 }
 
-int lava_init(int argc, char *argv[])
+static int lava_init(int argc, char *argv[])
 {
     if (argc != 2)
         return 1;
@@ -139,7 +139,7 @@ int lava_init(int argc, char *argv[])
     return 0;
 }
 
-void lava_reset()
+static void lava_reset()
 {
     std::cerr << "LAVA reset" << std::endl;
     lava.reset();
@@ -150,7 +150,7 @@ void lava_reset()
     lava_state.run = true;
 }
 
-void lava_dump()
+static void lava_dump()
 {
     // Dump RAM content
     auto const &ram = lava.inspectRam();
@@ -296,7 +296,7 @@ int32_t Callback::fseek(uint8_t fd, int32_t ofs, fseek_mode_t mode)
 
 // LAVA keyboard process
 
-void gl_keyboard_keys(uint8_t key, int x, int y)
+static void gl_keyboard_keys(uint8_t key, int x, int y)
 {
     if (!lava_state.run)
         glutLeaveMainLoop();
@@ -304,12 +304,12 @@ void gl_keyboard_keys(uint8_t key, int x, int y)
     lava_state.key_state.insert(key);
 }
 
-void gl_keyboard_keys_up(uint8_t key, int x, int y)
+static void gl_keyboard_keys_up(uint8_t key, int x, int y)
 {
     lava_state.key_state.erase(key);
 }
 
-void gl_special_keys(int key, int x, int y)
+static void gl_special_keys(int key, int x, int y)
 {
 #if RESET_KEY_F5
     if (key == GLUT_KEY_F8) {
@@ -325,13 +325,13 @@ void gl_special_keys(int key, int x, int y)
     lava_state.key_state.insert(key);
 }
 
-void gl_special_keys_up(int key, int x, int y)
+static void gl_special_keys_up(int key, int x, int y)
 {
     key |= SPECIAL_KEY;
     lava_state.key_state.erase(key);
 }
 
-uint8_t keycode_conv(int key)
+static uint8_t keycode_conv(int key)
 {
     auto const &k = key_map.find(key);
     if (k == key_map.cend()) {
@@ -377,7 +377,7 @@ int32_t Callback::in_key()
 
 // LAVA main loop
 
-void gl_idle()
+static void gl_idle()
 {
     try {
         if (lava_state.run)
@@ -396,7 +396,7 @@ void gl_idle()
 
 // OpenGL stuff
 
-std::string gl_get_shader_info_log(GLuint shader)
+static std::string gl_get_shader_info_log(GLuint shader)
 {
     GLchar log[512];
     glGetShaderInfoLog(shader, sizeof(log), NULL, log);
@@ -404,7 +404,7 @@ std::string gl_get_shader_info_log(GLuint shader)
     return std::string(log, slen);
 }
 
-std::string gl_get_program_info_log(GLuint program)
+static std::string gl_get_program_info_log(GLuint program)
 {
     GLchar log[512];
     glGetProgramInfoLog(program, sizeof(log), NULL, log);
@@ -412,7 +412,7 @@ std::string gl_get_program_info_log(GLuint program)
     return std::string(log, slen);
 }
 
-GLuint gl_compile_shader(GLenum type, GLchar *source)
+static GLuint gl_compile_shader(GLenum type, GLchar *source)
 {
     GLuint shader = glCreateShader(type);
     glShaderSource(shader, 1, &source, NULL);
@@ -424,16 +424,16 @@ GLuint gl_compile_shader(GLenum type, GLchar *source)
     return shader;
 }
 
-void load_palette()
+static void load_palettes()
 {
     int x = 0, y = 0;
     uint8_t *pdata = stbi_load("palette16.png", &x, &y, nullptr, 3);
     stbi_image_free(pdata);
 }
 
-void gl_init()
+static void gl_init()
 {
-    load_palette();
+    load_palettes();
 
     // Shader program
     GLuint program = glCreateProgram();

@@ -28,11 +28,7 @@ def gen_prototype(opinfo, extra):
     for i in range(pop):
         ps.append(f"uint32_t ds{i}")
 
-    ret = "void"
-    if param == op.PARAM_JMP:
-        ret = "bool"
-    elif push:
-        ret = "uint32_t"
+    ret = "uint32_t" if push else "void"
 
     return f"""
 {ret} {extra}lava_op_{name}({", ".join(ps)})
@@ -126,25 +122,16 @@ def gen_definition(file, opcode, opinfo):
 
     lines.append('    DEBUG_WRAP_PRINT(")");')
 
-    ret = ""
-    if param == op.PARAM_JMP:
-        ret = "bool ret = "
-    elif push:
-        ret = "uint32_t ret = "
+    ret = "uint32_t ret = " if push else ""
     if not ret:
         lines.append('    DEBUG_WRAP_PRINT(std::endl);')
 
+    lines.append("    pc += 1 + data.size();")
     lines.append(f"""    {ret}lava_op_{name}({", ".join(ps + pstack)});""")
     if push:
         lines.append("    ram.push(ret);")
     if ret:
         lines.append('    DEBUG_WRAP_PRINT(" -> " << ret << std::endl);')
-
-    if param == op.PARAM_JMP:
-        lines.append("    if (!ret)")
-        lines.append("        pc += 1 + data.size();")
-    else:
-        lines.append("    pc += 1 + data.size();")
 
     lines = "\n".join(lines)
 

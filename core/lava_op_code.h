@@ -5,10 +5,10 @@ void LavaProc::lava_wrap_push_u8(const std::vector<uint8_t> &data)
     uint8_t dp0 = data[0];
     DEBUG_WRAP_PRINT((uint32_t)dp0);
     DEBUG_WRAP_PRINT(")");
+    pc += 1 + data.size();
     uint32_t ret = lava_op_push_u8(dp0);
     ram.push(ret);
     DEBUG_WRAP_PRINT(" -> " << ret << std::endl);
-    pc += 1 + data.size();
 }
 
 void LavaProc::lava_wrap_push_i16(const std::vector<uint8_t> &data)
@@ -17,10 +17,10 @@ void LavaProc::lava_wrap_push_i16(const std::vector<uint8_t> &data)
     int16_t dp0 = (int16_t)(data[0] | (data[1] << 8));
     DEBUG_WRAP_PRINT(dp0);
     DEBUG_WRAP_PRINT(")");
+    pc += 1 + data.size();
     uint32_t ret = lava_op_push_i16(dp0);
     ram.push(ret);
     DEBUG_WRAP_PRINT(" -> " << ret << std::endl);
-    pc += 1 + data.size();
 }
 
 void LavaProc::lava_wrap_push_i32(const std::vector<uint8_t> &data)
@@ -29,10 +29,10 @@ void LavaProc::lava_wrap_push_i32(const std::vector<uint8_t> &data)
     int32_t dp0 = (int32_t)(data[0] | (data[1] << 8) | (data[2] << 16) | (data[3] << 24));
     DEBUG_WRAP_PRINT(dp0);
     DEBUG_WRAP_PRINT(")");
+    pc += 1 + data.size();
     uint32_t ret = lava_op_push_i32(dp0);
     ram.push(ret);
     DEBUG_WRAP_PRINT(" -> " << ret << std::endl);
-    pc += 1 + data.size();
 }
 
 void LavaProc::lava_wrap_pushv_u8(const std::vector<uint8_t> &data)
@@ -46,10 +46,10 @@ void LavaProc::lava_wrap_pushv_u8(const std::vector<uint8_t> &data)
     }
     DEBUG_WRAP_PRINT(dp0);
     DEBUG_WRAP_PRINT(")");
+    pc += 1 + data.size();
     uint32_t ret = lava_op_pushv_u8(dp0);
     ram.push(ret);
     DEBUG_WRAP_PRINT(" -> " << ret << std::endl);
-    pc += 1 + data.size();
 }
 
 void LavaProc::lava_wrap_pushv_i16(const std::vector<uint8_t> &data)
@@ -63,10 +63,10 @@ void LavaProc::lava_wrap_pushv_i16(const std::vector<uint8_t> &data)
     }
     DEBUG_WRAP_PRINT(dp0);
     DEBUG_WRAP_PRINT(")");
+    pc += 1 + data.size();
     uint32_t ret = lava_op_pushv_i16(dp0);
     ram.push(ret);
     DEBUG_WRAP_PRINT(" -> " << ret << std::endl);
-    pc += 1 + data.size();
 }
 
 void LavaProc::lava_wrap_pushv_i32(const std::vector<uint8_t> &data)
@@ -80,10 +80,10 @@ void LavaProc::lava_wrap_pushv_i32(const std::vector<uint8_t> &data)
     }
     DEBUG_WRAP_PRINT(dp0);
     DEBUG_WRAP_PRINT(")");
+    pc += 1 + data.size();
     uint32_t ret = lava_op_pushv_i32(dp0);
     ram.push(ret);
     DEBUG_WRAP_PRINT(" -> " << ret << std::endl);
-    pc += 1 + data.size();
 }
 
 void LavaProc::lava_wrap_pushg_u8(const std::vector<uint8_t> &data)
@@ -100,10 +100,10 @@ void LavaProc::lava_wrap_pushg_u8(const std::vector<uint8_t> &data)
     DEBUG_WRAP_PRINT(", ");
     DEBUG_WRAP_PRINT(ds0);
     DEBUG_WRAP_PRINT(")");
+    pc += 1 + data.size();
     uint32_t ret = lava_op_pushg_u8(dp0, ds0);
     ram.push(ret);
     DEBUG_WRAP_PRINT(" -> " << ret << std::endl);
-    pc += 1 + data.size();
 }
 
 void LavaProc::lava_wrap_pushg_i16(const std::vector<uint8_t> &data)
@@ -120,10 +120,10 @@ void LavaProc::lava_wrap_pushg_i16(const std::vector<uint8_t> &data)
     DEBUG_WRAP_PRINT(", ");
     DEBUG_WRAP_PRINT(ds0);
     DEBUG_WRAP_PRINT(")");
+    pc += 1 + data.size();
     uint32_t ret = lava_op_pushg_i16(dp0, ds0);
     ram.push(ret);
     DEBUG_WRAP_PRINT(" -> " << ret << std::endl);
-    pc += 1 + data.size();
 }
 
 void LavaProc::lava_wrap_pushg_i32(const std::vector<uint8_t> &data)
@@ -140,10 +140,10 @@ void LavaProc::lava_wrap_pushg_i32(const std::vector<uint8_t> &data)
     DEBUG_WRAP_PRINT(", ");
     DEBUG_WRAP_PRINT(ds0);
     DEBUG_WRAP_PRINT(")");
+    pc += 1 + data.size();
     uint32_t ret = lava_op_pushg_i32(dp0, ds0);
     ram.push(ret);
     DEBUG_WRAP_PRINT(" -> " << ret << std::endl);
-    pc += 1 + data.size();
 }
 
 void LavaProc::lava_wrap_pusha_u8(const std::vector<uint8_t> &data)
@@ -160,10 +160,10 @@ void LavaProc::lava_wrap_pusha_u8(const std::vector<uint8_t> &data)
     DEBUG_WRAP_PRINT(", ");
     DEBUG_WRAP_PRINT(ds0);
     DEBUG_WRAP_PRINT(")");
+    pc += 1 + data.size();
     uint32_t ret = lava_op_pusha_u8(dp0, ds0);
     ram.push(ret);
     DEBUG_WRAP_PRINT(" -> " << ret << std::endl);
-    pc += 1 + data.size();
 }
 
 void LavaProc::lava_wrap_pusha_i16(const std::vector<uint8_t> &data)
@@ -180,10 +180,10 @@ void LavaProc::lava_wrap_pusha_i16(const std::vector<uint8_t> &data)
     DEBUG_WRAP_PRINT(", ");
     DEBUG_WRAP_PRINT(ds0);
     DEBUG_WRAP_PRINT(")");
+    pc += 1 + data.size();
     uint32_t ret = lava_op_pusha_i16(dp0, ds0);
     ram.push(ret);
     DEBUG_WRAP_PRINT(" -> " << ret << std::endl);
-    pc += 1 + data.size();
 }
 
 void LavaProc::lava_wrap_pusha_i32(const std::vector<uint8_t> &data)
@@ -200,10 +200,10 @@ void LavaProc::lava_wrap_pusha_i32(const std::vector<uint8_t> &data)
     DEBUG_WRAP_PRINT(", ");
     DEBUG_WRAP_PRINT(ds0);
     DEBUG_WRAP_PRINT(")");
+    pc += 1 + data.size();
     uint32_t ret = lava_op_pusha_i32(dp0, ds0);
     ram.push(ret);
     DEBUG_WRAP_PRINT(" -> " << ret << std::endl);
-    pc += 1 + data.size();
 }
 
 void LavaProc::lava_wrap_push_str(const std::vector<uint8_t> &data)
@@ -212,10 +212,10 @@ void LavaProc::lava_wrap_push_str(const std::vector<uint8_t> &data)
     const std::vector<uint8_t> &dp0 = data;
     DEBUG_WRAP_PRINT('<' << dp0.size() << '>');
     DEBUG_WRAP_PRINT(")");
+    pc += 1 + data.size();
     uint32_t ret = lava_op_push_str(dp0);
     ram.push(ret);
     DEBUG_WRAP_PRINT(" -> " << ret << std::endl);
-    pc += 1 + data.size();
 }
 
 void LavaProc::lava_wrap_pushlv_u8(const std::vector<uint8_t> &data)
@@ -229,10 +229,10 @@ void LavaProc::lava_wrap_pushlv_u8(const std::vector<uint8_t> &data)
     }
     DEBUG_WRAP_PRINT(dp0);
     DEBUG_WRAP_PRINT(")");
+    pc += 1 + data.size();
     uint32_t ret = lava_op_pushlv_u8(dp0);
     ram.push(ret);
     DEBUG_WRAP_PRINT(" -> " << ret << std::endl);
-    pc += 1 + data.size();
 }
 
 void LavaProc::lava_wrap_pushlv_i16(const std::vector<uint8_t> &data)
@@ -246,10 +246,10 @@ void LavaProc::lava_wrap_pushlv_i16(const std::vector<uint8_t> &data)
     }
     DEBUG_WRAP_PRINT(dp0);
     DEBUG_WRAP_PRINT(")");
+    pc += 1 + data.size();
     uint32_t ret = lava_op_pushlv_i16(dp0);
     ram.push(ret);
     DEBUG_WRAP_PRINT(" -> " << ret << std::endl);
-    pc += 1 + data.size();
 }
 
 void LavaProc::lava_wrap_pushlv_i32(const std::vector<uint8_t> &data)
@@ -263,10 +263,10 @@ void LavaProc::lava_wrap_pushlv_i32(const std::vector<uint8_t> &data)
     }
     DEBUG_WRAP_PRINT(dp0);
     DEBUG_WRAP_PRINT(")");
+    pc += 1 + data.size();
     uint32_t ret = lava_op_pushlv_i32(dp0);
     ram.push(ret);
     DEBUG_WRAP_PRINT(" -> " << ret << std::endl);
-    pc += 1 + data.size();
 }
 
 void LavaProc::lava_wrap_pushlg_char(const std::vector<uint8_t> &data)
@@ -283,10 +283,10 @@ void LavaProc::lava_wrap_pushlg_char(const std::vector<uint8_t> &data)
     DEBUG_WRAP_PRINT(", ");
     DEBUG_WRAP_PRINT(ds0);
     DEBUG_WRAP_PRINT(")");
+    pc += 1 + data.size();
     uint32_t ret = lava_op_pushlg_char(dp0, ds0);
     ram.push(ret);
     DEBUG_WRAP_PRINT(" -> " << ret << std::endl);
-    pc += 1 + data.size();
 }
 
 void LavaProc::lava_wrap_pushla_u8(const std::vector<uint8_t> &data)
@@ -303,10 +303,10 @@ void LavaProc::lava_wrap_pushla_u8(const std::vector<uint8_t> &data)
     DEBUG_WRAP_PRINT(", ");
     DEBUG_WRAP_PRINT(ds0);
     DEBUG_WRAP_PRINT(")");
+    pc += 1 + data.size();
     uint32_t ret = lava_op_pushla_u8(dp0, ds0);
     ram.push(ret);
     DEBUG_WRAP_PRINT(" -> " << ret << std::endl);
-    pc += 1 + data.size();
 }
 
 void LavaProc::lava_wrap_pushla_i32(const std::vector<uint8_t> &data)
@@ -323,10 +323,10 @@ void LavaProc::lava_wrap_pushla_i32(const std::vector<uint8_t> &data)
     DEBUG_WRAP_PRINT(", ");
     DEBUG_WRAP_PRINT(ds0);
     DEBUG_WRAP_PRINT(")");
+    pc += 1 + data.size();
     uint32_t ret = lava_op_pushla_i32(dp0, ds0);
     ram.push(ret);
     DEBUG_WRAP_PRINT(" -> " << ret << std::endl);
-    pc += 1 + data.size();
 }
 
 void LavaProc::lava_wrap_pushl_i32(const std::vector<uint8_t> &data)
@@ -340,10 +340,10 @@ void LavaProc::lava_wrap_pushl_i32(const std::vector<uint8_t> &data)
     }
     DEBUG_WRAP_PRINT(dp0);
     DEBUG_WRAP_PRINT(")");
+    pc += 1 + data.size();
     uint32_t ret = lava_op_pushl_i32(dp0);
     ram.push(ret);
     DEBUG_WRAP_PRINT(" -> " << ret << std::endl);
-    pc += 1 + data.size();
 }
 
 void LavaProc::lava_wrap_pre_inc(const std::vector<uint8_t> &data)
@@ -352,10 +352,10 @@ void LavaProc::lava_wrap_pre_inc(const std::vector<uint8_t> &data)
     uint32_t ds0 = ram.pop();
     DEBUG_WRAP_PRINT(ds0);
     DEBUG_WRAP_PRINT(")");
+    pc += 1 + data.size();
     uint32_t ret = lava_op_pre_inc(ds0);
     ram.push(ret);
     DEBUG_WRAP_PRINT(" -> " << ret << std::endl);
-    pc += 1 + data.size();
 }
 
 void LavaProc::lava_wrap_pre_dec(const std::vector<uint8_t> &data)
@@ -364,10 +364,10 @@ void LavaProc::lava_wrap_pre_dec(const std::vector<uint8_t> &data)
     uint32_t ds0 = ram.pop();
     DEBUG_WRAP_PRINT(ds0);
     DEBUG_WRAP_PRINT(")");
+    pc += 1 + data.size();
     uint32_t ret = lava_op_pre_dec(ds0);
     ram.push(ret);
     DEBUG_WRAP_PRINT(" -> " << ret << std::endl);
-    pc += 1 + data.size();
 }
 
 void LavaProc::lava_wrap_post_inc(const std::vector<uint8_t> &data)
@@ -376,10 +376,10 @@ void LavaProc::lava_wrap_post_inc(const std::vector<uint8_t> &data)
     uint32_t ds0 = ram.pop();
     DEBUG_WRAP_PRINT(ds0);
     DEBUG_WRAP_PRINT(")");
+    pc += 1 + data.size();
     uint32_t ret = lava_op_post_inc(ds0);
     ram.push(ret);
     DEBUG_WRAP_PRINT(" -> " << ret << std::endl);
-    pc += 1 + data.size();
 }
 
 void LavaProc::lava_wrap_post_dec(const std::vector<uint8_t> &data)
@@ -388,10 +388,10 @@ void LavaProc::lava_wrap_post_dec(const std::vector<uint8_t> &data)
     uint32_t ds0 = ram.pop();
     DEBUG_WRAP_PRINT(ds0);
     DEBUG_WRAP_PRINT(")");
+    pc += 1 + data.size();
     uint32_t ret = lava_op_post_dec(ds0);
     ram.push(ret);
     DEBUG_WRAP_PRINT(" -> " << ret << std::endl);
-    pc += 1 + data.size();
 }
 
 void LavaProc::lava_wrap_add(const std::vector<uint8_t> &data)
@@ -403,10 +403,10 @@ void LavaProc::lava_wrap_add(const std::vector<uint8_t> &data)
     DEBUG_WRAP_PRINT(", ");
     DEBUG_WRAP_PRINT(ds1);
     DEBUG_WRAP_PRINT(")");
+    pc += 1 + data.size();
     uint32_t ret = lava_op_add(ds0, ds1);
     ram.push(ret);
     DEBUG_WRAP_PRINT(" -> " << ret << std::endl);
-    pc += 1 + data.size();
 }
 
 void LavaProc::lava_wrap_sub(const std::vector<uint8_t> &data)
@@ -418,10 +418,10 @@ void LavaProc::lava_wrap_sub(const std::vector<uint8_t> &data)
     DEBUG_WRAP_PRINT(", ");
     DEBUG_WRAP_PRINT(ds1);
     DEBUG_WRAP_PRINT(")");
+    pc += 1 + data.size();
     uint32_t ret = lava_op_sub(ds0, ds1);
     ram.push(ret);
     DEBUG_WRAP_PRINT(" -> " << ret << std::endl);
-    pc += 1 + data.size();
 }
 
 void LavaProc::lava_wrap_and(const std::vector<uint8_t> &data)
@@ -433,10 +433,10 @@ void LavaProc::lava_wrap_and(const std::vector<uint8_t> &data)
     DEBUG_WRAP_PRINT(", ");
     DEBUG_WRAP_PRINT(ds1);
     DEBUG_WRAP_PRINT(")");
+    pc += 1 + data.size();
     uint32_t ret = lava_op_and(ds0, ds1);
     ram.push(ret);
     DEBUG_WRAP_PRINT(" -> " << ret << std::endl);
-    pc += 1 + data.size();
 }
 
 void LavaProc::lava_wrap_or(const std::vector<uint8_t> &data)
@@ -448,10 +448,10 @@ void LavaProc::lava_wrap_or(const std::vector<uint8_t> &data)
     DEBUG_WRAP_PRINT(", ");
     DEBUG_WRAP_PRINT(ds1);
     DEBUG_WRAP_PRINT(")");
+    pc += 1 + data.size();
     uint32_t ret = lava_op_or(ds0, ds1);
     ram.push(ret);
     DEBUG_WRAP_PRINT(" -> " << ret << std::endl);
-    pc += 1 + data.size();
 }
 
 void LavaProc::lava_wrap_xor(const std::vector<uint8_t> &data)
@@ -463,10 +463,10 @@ void LavaProc::lava_wrap_xor(const std::vector<uint8_t> &data)
     DEBUG_WRAP_PRINT(", ");
     DEBUG_WRAP_PRINT(ds1);
     DEBUG_WRAP_PRINT(")");
+    pc += 1 + data.size();
     uint32_t ret = lava_op_xor(ds0, ds1);
     ram.push(ret);
     DEBUG_WRAP_PRINT(" -> " << ret << std::endl);
-    pc += 1 + data.size();
 }
 
 void LavaProc::lava_wrap_land(const std::vector<uint8_t> &data)
@@ -478,10 +478,10 @@ void LavaProc::lava_wrap_land(const std::vector<uint8_t> &data)
     DEBUG_WRAP_PRINT(", ");
     DEBUG_WRAP_PRINT(ds1);
     DEBUG_WRAP_PRINT(")");
+    pc += 1 + data.size();
     uint32_t ret = lava_op_land(ds0, ds1);
     ram.push(ret);
     DEBUG_WRAP_PRINT(" -> " << ret << std::endl);
-    pc += 1 + data.size();
 }
 
 void LavaProc::lava_wrap_lor(const std::vector<uint8_t> &data)
@@ -493,10 +493,10 @@ void LavaProc::lava_wrap_lor(const std::vector<uint8_t> &data)
     DEBUG_WRAP_PRINT(", ");
     DEBUG_WRAP_PRINT(ds1);
     DEBUG_WRAP_PRINT(")");
+    pc += 1 + data.size();
     uint32_t ret = lava_op_lor(ds0, ds1);
     ram.push(ret);
     DEBUG_WRAP_PRINT(" -> " << ret << std::endl);
-    pc += 1 + data.size();
 }
 
 void LavaProc::lava_wrap_mul(const std::vector<uint8_t> &data)
@@ -508,10 +508,10 @@ void LavaProc::lava_wrap_mul(const std::vector<uint8_t> &data)
     DEBUG_WRAP_PRINT(", ");
     DEBUG_WRAP_PRINT(ds1);
     DEBUG_WRAP_PRINT(")");
+    pc += 1 + data.size();
     uint32_t ret = lava_op_mul(ds0, ds1);
     ram.push(ret);
     DEBUG_WRAP_PRINT(" -> " << ret << std::endl);
-    pc += 1 + data.size();
 }
 
 void LavaProc::lava_wrap_div(const std::vector<uint8_t> &data)
@@ -523,10 +523,10 @@ void LavaProc::lava_wrap_div(const std::vector<uint8_t> &data)
     DEBUG_WRAP_PRINT(", ");
     DEBUG_WRAP_PRINT(ds1);
     DEBUG_WRAP_PRINT(")");
+    pc += 1 + data.size();
     uint32_t ret = lava_op_div(ds0, ds1);
     ram.push(ret);
     DEBUG_WRAP_PRINT(" -> " << ret << std::endl);
-    pc += 1 + data.size();
 }
 
 void LavaProc::lava_wrap_mod(const std::vector<uint8_t> &data)
@@ -538,10 +538,10 @@ void LavaProc::lava_wrap_mod(const std::vector<uint8_t> &data)
     DEBUG_WRAP_PRINT(", ");
     DEBUG_WRAP_PRINT(ds1);
     DEBUG_WRAP_PRINT(")");
+    pc += 1 + data.size();
     uint32_t ret = lava_op_mod(ds0, ds1);
     ram.push(ret);
     DEBUG_WRAP_PRINT(" -> " << ret << std::endl);
-    pc += 1 + data.size();
 }
 
 void LavaProc::lava_wrap_equ(const std::vector<uint8_t> &data)
@@ -553,10 +553,10 @@ void LavaProc::lava_wrap_equ(const std::vector<uint8_t> &data)
     DEBUG_WRAP_PRINT(", ");
     DEBUG_WRAP_PRINT(ds1);
     DEBUG_WRAP_PRINT(")");
+    pc += 1 + data.size();
     uint32_t ret = lava_op_equ(ds0, ds1);
     ram.push(ret);
     DEBUG_WRAP_PRINT(" -> " << ret << std::endl);
-    pc += 1 + data.size();
 }
 
 void LavaProc::lava_wrap_neq(const std::vector<uint8_t> &data)
@@ -568,10 +568,10 @@ void LavaProc::lava_wrap_neq(const std::vector<uint8_t> &data)
     DEBUG_WRAP_PRINT(", ");
     DEBUG_WRAP_PRINT(ds1);
     DEBUG_WRAP_PRINT(")");
+    pc += 1 + data.size();
     uint32_t ret = lava_op_neq(ds0, ds1);
     ram.push(ret);
     DEBUG_WRAP_PRINT(" -> " << ret << std::endl);
-    pc += 1 + data.size();
 }
 
 void LavaProc::lava_wrap_le(const std::vector<uint8_t> &data)
@@ -583,10 +583,10 @@ void LavaProc::lava_wrap_le(const std::vector<uint8_t> &data)
     DEBUG_WRAP_PRINT(", ");
     DEBUG_WRAP_PRINT(ds1);
     DEBUG_WRAP_PRINT(")");
+    pc += 1 + data.size();
     uint32_t ret = lava_op_le(ds0, ds1);
     ram.push(ret);
     DEBUG_WRAP_PRINT(" -> " << ret << std::endl);
-    pc += 1 + data.size();
 }
 
 void LavaProc::lava_wrap_ge(const std::vector<uint8_t> &data)
@@ -598,10 +598,10 @@ void LavaProc::lava_wrap_ge(const std::vector<uint8_t> &data)
     DEBUG_WRAP_PRINT(", ");
     DEBUG_WRAP_PRINT(ds1);
     DEBUG_WRAP_PRINT(")");
+    pc += 1 + data.size();
     uint32_t ret = lava_op_ge(ds0, ds1);
     ram.push(ret);
     DEBUG_WRAP_PRINT(" -> " << ret << std::endl);
-    pc += 1 + data.size();
 }
 
 void LavaProc::lava_wrap_great(const std::vector<uint8_t> &data)
@@ -613,10 +613,10 @@ void LavaProc::lava_wrap_great(const std::vector<uint8_t> &data)
     DEBUG_WRAP_PRINT(", ");
     DEBUG_WRAP_PRINT(ds1);
     DEBUG_WRAP_PRINT(")");
+    pc += 1 + data.size();
     uint32_t ret = lava_op_great(ds0, ds1);
     ram.push(ret);
     DEBUG_WRAP_PRINT(" -> " << ret << std::endl);
-    pc += 1 + data.size();
 }
 
 void LavaProc::lava_wrap_less(const std::vector<uint8_t> &data)
@@ -628,10 +628,10 @@ void LavaProc::lava_wrap_less(const std::vector<uint8_t> &data)
     DEBUG_WRAP_PRINT(", ");
     DEBUG_WRAP_PRINT(ds1);
     DEBUG_WRAP_PRINT(")");
+    pc += 1 + data.size();
     uint32_t ret = lava_op_less(ds0, ds1);
     ram.push(ret);
     DEBUG_WRAP_PRINT(" -> " << ret << std::endl);
-    pc += 1 + data.size();
 }
 
 void LavaProc::lava_wrap_let(const std::vector<uint8_t> &data)
@@ -643,10 +643,10 @@ void LavaProc::lava_wrap_let(const std::vector<uint8_t> &data)
     DEBUG_WRAP_PRINT(", ");
     DEBUG_WRAP_PRINT(ds1);
     DEBUG_WRAP_PRINT(")");
+    pc += 1 + data.size();
     uint32_t ret = lava_op_let(ds0, ds1);
     ram.push(ret);
     DEBUG_WRAP_PRINT(" -> " << ret << std::endl);
-    pc += 1 + data.size();
 }
 
 void LavaProc::lava_wrap_ptr(const std::vector<uint8_t> &data)
@@ -655,10 +655,10 @@ void LavaProc::lava_wrap_ptr(const std::vector<uint8_t> &data)
     uint32_t ds0 = ram.pop();
     DEBUG_WRAP_PRINT(ds0);
     DEBUG_WRAP_PRINT(")");
+    pc += 1 + data.size();
     uint32_t ret = lava_op_ptr(ds0);
     ram.push(ret);
     DEBUG_WRAP_PRINT(" -> " << ret << std::endl);
-    pc += 1 + data.size();
 }
 
 void LavaProc::lava_wrap_pop(const std::vector<uint8_t> &data)
@@ -668,8 +668,8 @@ void LavaProc::lava_wrap_pop(const std::vector<uint8_t> &data)
     DEBUG_WRAP_PRINT(ds0);
     DEBUG_WRAP_PRINT(")");
     DEBUG_WRAP_PRINT(std::endl);
-    lava_op_pop(ds0);
     pc += 1 + data.size();
+    lava_op_pop(ds0);
 }
 
 void LavaProc::lava_wrap_jmpe(const std::vector<uint8_t> &data)
@@ -678,10 +678,9 @@ void LavaProc::lava_wrap_jmpe(const std::vector<uint8_t> &data)
     uint32_t dp0 = (uint32_t)(data[0] | (data[1] << 8) | (data[2] << 16));
     DEBUG_WRAP_PRINT(dp0);
     DEBUG_WRAP_PRINT(")");
-    bool ret = lava_op_jmpe(dp0);
-    DEBUG_WRAP_PRINT(" -> " << ret << std::endl);
-    if (!ret)
-        pc += 1 + data.size();
+    DEBUG_WRAP_PRINT(std::endl);
+    pc += 1 + data.size();
+    lava_op_jmpe(dp0);
 }
 
 void LavaProc::lava_wrap_jmpn(const std::vector<uint8_t> &data)
@@ -690,10 +689,9 @@ void LavaProc::lava_wrap_jmpn(const std::vector<uint8_t> &data)
     uint32_t dp0 = (uint32_t)(data[0] | (data[1] << 8) | (data[2] << 16));
     DEBUG_WRAP_PRINT(dp0);
     DEBUG_WRAP_PRINT(")");
-    bool ret = lava_op_jmpn(dp0);
-    DEBUG_WRAP_PRINT(" -> " << ret << std::endl);
-    if (!ret)
-        pc += 1 + data.size();
+    DEBUG_WRAP_PRINT(std::endl);
+    pc += 1 + data.size();
+    lava_op_jmpn(dp0);
 }
 
 void LavaProc::lava_wrap_jmp(const std::vector<uint8_t> &data)
@@ -702,10 +700,9 @@ void LavaProc::lava_wrap_jmp(const std::vector<uint8_t> &data)
     uint32_t dp0 = (uint32_t)(data[0] | (data[1] << 8) | (data[2] << 16));
     DEBUG_WRAP_PRINT(dp0);
     DEBUG_WRAP_PRINT(")");
-    bool ret = lava_op_jmp(dp0);
-    DEBUG_WRAP_PRINT(" -> " << ret << std::endl);
-    if (!ret)
-        pc += 1 + data.size();
+    DEBUG_WRAP_PRINT(std::endl);
+    pc += 1 + data.size();
+    lava_op_jmp(dp0);
 }
 
 void LavaProc::lava_wrap_set_sp(const std::vector<uint8_t> &data)
@@ -720,8 +717,8 @@ void LavaProc::lava_wrap_set_sp(const std::vector<uint8_t> &data)
     DEBUG_WRAP_PRINT(dp0);
     DEBUG_WRAP_PRINT(")");
     DEBUG_WRAP_PRINT(std::endl);
-    lava_op_set_sp(dp0);
     pc += 1 + data.size();
+    lava_op_set_sp(dp0);
 }
 
 void LavaProc::lava_wrap_call(const std::vector<uint8_t> &data)
@@ -730,15 +727,14 @@ void LavaProc::lava_wrap_call(const std::vector<uint8_t> &data)
     uint32_t dp0 = (uint32_t)(data[0] | (data[1] << 8) | (data[2] << 16));
     DEBUG_WRAP_PRINT(dp0);
     DEBUG_WRAP_PRINT(")");
-    bool ret = lava_op_call(dp0);
-    DEBUG_WRAP_PRINT(" -> " << ret << std::endl);
-    if (!ret)
-        pc += 1 + data.size();
+    DEBUG_WRAP_PRINT(std::endl);
+    pc += 1 + data.size();
+    lava_op_call(dp0);
 }
 
-void LavaProc::lava_wrap_add_bp(const std::vector<uint8_t> &data)
+void LavaProc::lava_wrap_push_frame(const std::vector<uint8_t> &data)
 {
-    DEBUG_WRAP_PRINT("add_bp(");
+    DEBUG_WRAP_PRINT("push_frame(");
     uint32_t dp0;
     uint8_t dp1;
     if (rambits <= 16) {
@@ -752,17 +748,17 @@ void LavaProc::lava_wrap_add_bp(const std::vector<uint8_t> &data)
     DEBUG_WRAP_PRINT(", " << (uint32_t)dp1);
     DEBUG_WRAP_PRINT(")");
     DEBUG_WRAP_PRINT(std::endl);
-    lava_op_add_bp(dp0, dp1);
     pc += 1 + data.size();
+    lava_op_push_frame(dp0, dp1);
 }
 
-void LavaProc::lava_wrap_sub_bp(const std::vector<uint8_t> &data)
+void LavaProc::lava_wrap_pop_frame(const std::vector<uint8_t> &data)
 {
-    DEBUG_WRAP_PRINT("sub_bp(");
+    DEBUG_WRAP_PRINT("pop_frame(");
     DEBUG_WRAP_PRINT(")");
     DEBUG_WRAP_PRINT(std::endl);
-    lava_op_sub_bp();
     pc += 1 + data.size();
+    lava_op_pop_frame();
 }
 
 void LavaProc::lava_wrap_quit(const std::vector<uint8_t> &data)
@@ -770,8 +766,8 @@ void LavaProc::lava_wrap_quit(const std::vector<uint8_t> &data)
     DEBUG_WRAP_PRINT("quit(");
     DEBUG_WRAP_PRINT(")");
     DEBUG_WRAP_PRINT(std::endl);
-    lava_op_quit();
     pc += 1 + data.size();
+    lava_op_quit();
 }
 
 void LavaProc::lava_wrap_preset(const std::vector<uint8_t> &data)
@@ -794,8 +790,8 @@ void LavaProc::lava_wrap_preset(const std::vector<uint8_t> &data)
     DEBUG_WRAP_PRINT(", <" << dp2.size() << '>');
     DEBUG_WRAP_PRINT(")");
     DEBUG_WRAP_PRINT(std::endl);
-    lava_op_preset(dp0, dp2);
     pc += 1 + data.size();
+    lava_op_preset(dp0, dp2);
 }
 
 void LavaProc::lava_wrap_qadd(const std::vector<uint8_t> &data)
@@ -807,10 +803,10 @@ void LavaProc::lava_wrap_qadd(const std::vector<uint8_t> &data)
     DEBUG_WRAP_PRINT(", ");
     DEBUG_WRAP_PRINT(ds0);
     DEBUG_WRAP_PRINT(")");
+    pc += 1 + data.size();
     uint32_t ret = lava_op_qadd(dp0, ds0);
     ram.push(ret);
     DEBUG_WRAP_PRINT(" -> " << ret << std::endl);
-    pc += 1 + data.size();
 }
 
 void LavaProc::lava_wrap_qsub(const std::vector<uint8_t> &data)
@@ -822,10 +818,10 @@ void LavaProc::lava_wrap_qsub(const std::vector<uint8_t> &data)
     DEBUG_WRAP_PRINT(", ");
     DEBUG_WRAP_PRINT(ds0);
     DEBUG_WRAP_PRINT(")");
+    pc += 1 + data.size();
     uint32_t ret = lava_op_qsub(dp0, ds0);
     ram.push(ret);
     DEBUG_WRAP_PRINT(" -> " << ret << std::endl);
-    pc += 1 + data.size();
 }
 
 void LavaProc::lava_wrap_qmul(const std::vector<uint8_t> &data)
@@ -837,10 +833,10 @@ void LavaProc::lava_wrap_qmul(const std::vector<uint8_t> &data)
     DEBUG_WRAP_PRINT(", ");
     DEBUG_WRAP_PRINT(ds0);
     DEBUG_WRAP_PRINT(")");
+    pc += 1 + data.size();
     uint32_t ret = lava_op_qmul(dp0, ds0);
     ram.push(ret);
     DEBUG_WRAP_PRINT(" -> " << ret << std::endl);
-    pc += 1 + data.size();
 }
 
 void LavaProc::lava_wrap_qdiv(const std::vector<uint8_t> &data)
@@ -852,10 +848,10 @@ void LavaProc::lava_wrap_qdiv(const std::vector<uint8_t> &data)
     DEBUG_WRAP_PRINT(", ");
     DEBUG_WRAP_PRINT(ds0);
     DEBUG_WRAP_PRINT(")");
+    pc += 1 + data.size();
     uint32_t ret = lava_op_qdiv(dp0, ds0);
     ram.push(ret);
     DEBUG_WRAP_PRINT(" -> " << ret << std::endl);
-    pc += 1 + data.size();
 }
 
 void LavaProc::lava_wrap_qmod(const std::vector<uint8_t> &data)
@@ -867,10 +863,10 @@ void LavaProc::lava_wrap_qmod(const std::vector<uint8_t> &data)
     DEBUG_WRAP_PRINT(", ");
     DEBUG_WRAP_PRINT(ds0);
     DEBUG_WRAP_PRINT(")");
+    pc += 1 + data.size();
     uint32_t ret = lava_op_qmod(dp0, ds0);
     ram.push(ret);
     DEBUG_WRAP_PRINT(" -> " << ret << std::endl);
-    pc += 1 + data.size();
 }
 
 void LavaProc::lava_wrap_qlshift(const std::vector<uint8_t> &data)
@@ -882,10 +878,10 @@ void LavaProc::lava_wrap_qlshift(const std::vector<uint8_t> &data)
     DEBUG_WRAP_PRINT(", ");
     DEBUG_WRAP_PRINT(ds0);
     DEBUG_WRAP_PRINT(")");
+    pc += 1 + data.size();
     uint32_t ret = lava_op_qlshift(dp0, ds0);
     ram.push(ret);
     DEBUG_WRAP_PRINT(" -> " << ret << std::endl);
-    pc += 1 + data.size();
 }
 
 void LavaProc::lava_wrap_qrshift(const std::vector<uint8_t> &data)
@@ -897,10 +893,10 @@ void LavaProc::lava_wrap_qrshift(const std::vector<uint8_t> &data)
     DEBUG_WRAP_PRINT(", ");
     DEBUG_WRAP_PRINT(ds0);
     DEBUG_WRAP_PRINT(")");
+    pc += 1 + data.size();
     uint32_t ret = lava_op_qrshift(dp0, ds0);
     ram.push(ret);
     DEBUG_WRAP_PRINT(" -> " << ret << std::endl);
-    pc += 1 + data.size();
 }
 
 void LavaProc::lava_wrap_qequ(const std::vector<uint8_t> &data)
@@ -912,10 +908,10 @@ void LavaProc::lava_wrap_qequ(const std::vector<uint8_t> &data)
     DEBUG_WRAP_PRINT(", ");
     DEBUG_WRAP_PRINT(ds0);
     DEBUG_WRAP_PRINT(")");
+    pc += 1 + data.size();
     uint32_t ret = lava_op_qequ(dp0, ds0);
     ram.push(ret);
     DEBUG_WRAP_PRINT(" -> " << ret << std::endl);
-    pc += 1 + data.size();
 }
 
 void LavaProc::lava_wrap_qneq(const std::vector<uint8_t> &data)
@@ -927,10 +923,10 @@ void LavaProc::lava_wrap_qneq(const std::vector<uint8_t> &data)
     DEBUG_WRAP_PRINT(", ");
     DEBUG_WRAP_PRINT(ds0);
     DEBUG_WRAP_PRINT(")");
+    pc += 1 + data.size();
     uint32_t ret = lava_op_qneq(dp0, ds0);
     ram.push(ret);
     DEBUG_WRAP_PRINT(" -> " << ret << std::endl);
-    pc += 1 + data.size();
 }
 
 void LavaProc::lava_wrap_qgreat(const std::vector<uint8_t> &data)
@@ -942,10 +938,10 @@ void LavaProc::lava_wrap_qgreat(const std::vector<uint8_t> &data)
     DEBUG_WRAP_PRINT(", ");
     DEBUG_WRAP_PRINT(ds0);
     DEBUG_WRAP_PRINT(")");
+    pc += 1 + data.size();
     uint32_t ret = lava_op_qgreat(dp0, ds0);
     ram.push(ret);
     DEBUG_WRAP_PRINT(" -> " << ret << std::endl);
-    pc += 1 + data.size();
 }
 
 void LavaProc::lava_wrap_qless(const std::vector<uint8_t> &data)
@@ -957,10 +953,10 @@ void LavaProc::lava_wrap_qless(const std::vector<uint8_t> &data)
     DEBUG_WRAP_PRINT(", ");
     DEBUG_WRAP_PRINT(ds0);
     DEBUG_WRAP_PRINT(")");
+    pc += 1 + data.size();
     uint32_t ret = lava_op_qless(dp0, ds0);
     ram.push(ret);
     DEBUG_WRAP_PRINT(" -> " << ret << std::endl);
-    pc += 1 + data.size();
 }
 
 void LavaProc::lava_wrap_qge(const std::vector<uint8_t> &data)
@@ -972,10 +968,10 @@ void LavaProc::lava_wrap_qge(const std::vector<uint8_t> &data)
     DEBUG_WRAP_PRINT(", ");
     DEBUG_WRAP_PRINT(ds0);
     DEBUG_WRAP_PRINT(")");
+    pc += 1 + data.size();
     uint32_t ret = lava_op_qge(dp0, ds0);
     ram.push(ret);
     DEBUG_WRAP_PRINT(" -> " << ret << std::endl);
-    pc += 1 + data.size();
 }
 
 void LavaProc::lava_wrap_qle(const std::vector<uint8_t> &data)
@@ -987,20 +983,20 @@ void LavaProc::lava_wrap_qle(const std::vector<uint8_t> &data)
     DEBUG_WRAP_PRINT(", ");
     DEBUG_WRAP_PRINT(ds0);
     DEBUG_WRAP_PRINT(")");
+    pc += 1 + data.size();
     uint32_t ret = lava_op_qle(dp0, ds0);
     ram.push(ret);
     DEBUG_WRAP_PRINT(" -> " << ret << std::endl);
-    pc += 1 + data.size();
 }
 
 void LavaProc::lava_wrap_getchar(const std::vector<uint8_t> &data)
 {
     DEBUG_WRAP_PRINT("getchar(");
     DEBUG_WRAP_PRINT(")");
+    pc += 1 + data.size();
     uint32_t ret = lava_op_getchar();
     ram.push(ret);
     DEBUG_WRAP_PRINT(" -> " << ret << std::endl);
-    pc += 1 + data.size();
 }
 
 void LavaProc::lava_wrap_printf(const std::vector<uint8_t> &data)
@@ -1010,8 +1006,8 @@ void LavaProc::lava_wrap_printf(const std::vector<uint8_t> &data)
     DEBUG_WRAP_PRINT(ds0);
     DEBUG_WRAP_PRINT(")");
     DEBUG_WRAP_PRINT(std::endl);
-    lava_op_printf(ds0);
     pc += 1 + data.size();
+    lava_op_printf(ds0);
 }
 
 void LavaProc::lava_wrap_strcpy(const std::vector<uint8_t> &data)
@@ -1024,8 +1020,8 @@ void LavaProc::lava_wrap_strcpy(const std::vector<uint8_t> &data)
     DEBUG_WRAP_PRINT(ds1);
     DEBUG_WRAP_PRINT(")");
     DEBUG_WRAP_PRINT(std::endl);
-    lava_op_strcpy(ds0, ds1);
     pc += 1 + data.size();
+    lava_op_strcpy(ds0, ds1);
 }
 
 void LavaProc::lava_wrap_strlen(const std::vector<uint8_t> &data)
@@ -1034,10 +1030,10 @@ void LavaProc::lava_wrap_strlen(const std::vector<uint8_t> &data)
     uint32_t ds0 = ram.pop();
     DEBUG_WRAP_PRINT(ds0);
     DEBUG_WRAP_PRINT(")");
+    pc += 1 + data.size();
     uint32_t ret = lava_op_strlen(ds0);
     ram.push(ret);
     DEBUG_WRAP_PRINT(" -> " << ret << std::endl);
-    pc += 1 + data.size();
 }
 
 void LavaProc::lava_wrap_setscreen(const std::vector<uint8_t> &data)
@@ -1047,8 +1043,8 @@ void LavaProc::lava_wrap_setscreen(const std::vector<uint8_t> &data)
     DEBUG_WRAP_PRINT(ds0);
     DEBUG_WRAP_PRINT(")");
     DEBUG_WRAP_PRINT(std::endl);
-    lava_op_setscreen(ds0);
     pc += 1 + data.size();
+    lava_op_setscreen(ds0);
 }
 
 void LavaProc::lava_wrap_delay(const std::vector<uint8_t> &data)
@@ -1058,8 +1054,8 @@ void LavaProc::lava_wrap_delay(const std::vector<uint8_t> &data)
     DEBUG_WRAP_PRINT(ds0);
     DEBUG_WRAP_PRINT(")");
     DEBUG_WRAP_PRINT(std::endl);
-    lava_op_delay(ds0);
     pc += 1 + data.size();
+    lava_op_delay(ds0);
 }
 
 void LavaProc::lava_wrap_writeblock(const std::vector<uint8_t> &data)
@@ -1084,8 +1080,8 @@ void LavaProc::lava_wrap_writeblock(const std::vector<uint8_t> &data)
     DEBUG_WRAP_PRINT(ds5);
     DEBUG_WRAP_PRINT(")");
     DEBUG_WRAP_PRINT(std::endl);
-    lava_op_writeblock(ds0, ds1, ds2, ds3, ds4, ds5);
     pc += 1 + data.size();
+    lava_op_writeblock(ds0, ds1, ds2, ds3, ds4, ds5);
 }
 
 void LavaProc::lava_wrap_fbswap(const std::vector<uint8_t> &data)
@@ -1093,8 +1089,8 @@ void LavaProc::lava_wrap_fbswap(const std::vector<uint8_t> &data)
     DEBUG_WRAP_PRINT("fbswap(");
     DEBUG_WRAP_PRINT(")");
     DEBUG_WRAP_PRINT(std::endl);
-    lava_op_fbswap();
     pc += 1 + data.size();
+    lava_op_fbswap();
 }
 
 void LavaProc::lava_wrap_textout(const std::vector<uint8_t> &data)
@@ -1113,8 +1109,8 @@ void LavaProc::lava_wrap_textout(const std::vector<uint8_t> &data)
     DEBUG_WRAP_PRINT(ds3);
     DEBUG_WRAP_PRINT(")");
     DEBUG_WRAP_PRINT(std::endl);
-    lava_op_textout(ds0, ds1, ds2, ds3);
     pc += 1 + data.size();
+    lava_op_textout(ds0, ds1, ds2, ds3);
 }
 
 void LavaProc::lava_wrap_block(const std::vector<uint8_t> &data)
@@ -1136,8 +1132,8 @@ void LavaProc::lava_wrap_block(const std::vector<uint8_t> &data)
     DEBUG_WRAP_PRINT(ds4);
     DEBUG_WRAP_PRINT(")");
     DEBUG_WRAP_PRINT(std::endl);
-    lava_op_block(ds0, ds1, ds2, ds3, ds4);
     pc += 1 + data.size();
+    lava_op_block(ds0, ds1, ds2, ds3, ds4);
 }
 
 void LavaProc::lava_wrap_rectangle(const std::vector<uint8_t> &data)
@@ -1159,8 +1155,8 @@ void LavaProc::lava_wrap_rectangle(const std::vector<uint8_t> &data)
     DEBUG_WRAP_PRINT(ds4);
     DEBUG_WRAP_PRINT(")");
     DEBUG_WRAP_PRINT(std::endl);
-    lava_op_rectangle(ds0, ds1, ds2, ds3, ds4);
     pc += 1 + data.size();
+    lava_op_rectangle(ds0, ds1, ds2, ds3, ds4);
 }
 
 void LavaProc::lava_wrap_exit(const std::vector<uint8_t> &data)
@@ -1170,8 +1166,8 @@ void LavaProc::lava_wrap_exit(const std::vector<uint8_t> &data)
     DEBUG_WRAP_PRINT(ds0);
     DEBUG_WRAP_PRINT(")");
     DEBUG_WRAP_PRINT(std::endl);
-    lava_op_exit(ds0);
     pc += 1 + data.size();
+    lava_op_exit(ds0);
 }
 
 void LavaProc::lava_wrap_clearscreen(const std::vector<uint8_t> &data)
@@ -1179,18 +1175,18 @@ void LavaProc::lava_wrap_clearscreen(const std::vector<uint8_t> &data)
     DEBUG_WRAP_PRINT("clearscreen(");
     DEBUG_WRAP_PRINT(")");
     DEBUG_WRAP_PRINT(std::endl);
-    lava_op_clearscreen();
     pc += 1 + data.size();
+    lava_op_clearscreen();
 }
 
 void LavaProc::lava_wrap_rand(const std::vector<uint8_t> &data)
 {
     DEBUG_WRAP_PRINT("rand(");
     DEBUG_WRAP_PRINT(")");
+    pc += 1 + data.size();
     uint32_t ret = lava_op_rand();
     ram.push(ret);
     DEBUG_WRAP_PRINT(" -> " << ret << std::endl);
-    pc += 1 + data.size();
 }
 
 void LavaProc::lava_wrap_srand(const std::vector<uint8_t> &data)
@@ -1200,8 +1196,8 @@ void LavaProc::lava_wrap_srand(const std::vector<uint8_t> &data)
     DEBUG_WRAP_PRINT(ds0);
     DEBUG_WRAP_PRINT(")");
     DEBUG_WRAP_PRINT(std::endl);
-    lava_op_srand(ds0);
     pc += 1 + data.size();
+    lava_op_srand(ds0);
 }
 
 void LavaProc::lava_wrap_locate(const std::vector<uint8_t> &data)
@@ -1214,18 +1210,18 @@ void LavaProc::lava_wrap_locate(const std::vector<uint8_t> &data)
     DEBUG_WRAP_PRINT(ds1);
     DEBUG_WRAP_PRINT(")");
     DEBUG_WRAP_PRINT(std::endl);
-    lava_op_locate(ds0, ds1);
     pc += 1 + data.size();
+    lava_op_locate(ds0, ds1);
 }
 
 void LavaProc::lava_wrap_inkey(const std::vector<uint8_t> &data)
 {
     DEBUG_WRAP_PRINT("inkey(");
     DEBUG_WRAP_PRINT(")");
+    pc += 1 + data.size();
     uint32_t ret = lava_op_inkey();
     ram.push(ret);
     DEBUG_WRAP_PRINT(" -> " << ret << std::endl);
-    pc += 1 + data.size();
 }
 
 void LavaProc::lava_wrap_point(const std::vector<uint8_t> &data)
@@ -1241,8 +1237,8 @@ void LavaProc::lava_wrap_point(const std::vector<uint8_t> &data)
     DEBUG_WRAP_PRINT(ds2);
     DEBUG_WRAP_PRINT(")");
     DEBUG_WRAP_PRINT(std::endl);
-    lava_op_point(ds0, ds1, ds2);
     pc += 1 + data.size();
+    lava_op_point(ds0, ds1, ds2);
 }
 
 void LavaProc::lava_wrap_line(const std::vector<uint8_t> &data)
@@ -1264,8 +1260,8 @@ void LavaProc::lava_wrap_line(const std::vector<uint8_t> &data)
     DEBUG_WRAP_PRINT(ds4);
     DEBUG_WRAP_PRINT(")");
     DEBUG_WRAP_PRINT(std::endl);
-    lava_op_line(ds0, ds1, ds2, ds3, ds4);
     pc += 1 + data.size();
+    lava_op_line(ds0, ds1, ds2, ds3, ds4);
 }
 
 void LavaProc::lava_wrap_circle(const std::vector<uint8_t> &data)
@@ -1287,8 +1283,8 @@ void LavaProc::lava_wrap_circle(const std::vector<uint8_t> &data)
     DEBUG_WRAP_PRINT(ds4);
     DEBUG_WRAP_PRINT(")");
     DEBUG_WRAP_PRINT(std::endl);
-    lava_op_circle(ds0, ds1, ds2, ds3, ds4);
     pc += 1 + data.size();
+    lava_op_circle(ds0, ds1, ds2, ds3, ds4);
 }
 
 void LavaProc::lava_wrap_strchr(const std::vector<uint8_t> &data)
@@ -1300,10 +1296,10 @@ void LavaProc::lava_wrap_strchr(const std::vector<uint8_t> &data)
     DEBUG_WRAP_PRINT(", ");
     DEBUG_WRAP_PRINT(ds1);
     DEBUG_WRAP_PRINT(")");
+    pc += 1 + data.size();
     uint32_t ret = lava_op_strchr(ds0, ds1);
     ram.push(ret);
     DEBUG_WRAP_PRINT(" -> " << ret << std::endl);
-    pc += 1 + data.size();
 }
 
 void LavaProc::lava_wrap_strcmp(const std::vector<uint8_t> &data)
@@ -1315,10 +1311,10 @@ void LavaProc::lava_wrap_strcmp(const std::vector<uint8_t> &data)
     DEBUG_WRAP_PRINT(", ");
     DEBUG_WRAP_PRINT(ds1);
     DEBUG_WRAP_PRINT(")");
+    pc += 1 + data.size();
     uint32_t ret = lava_op_strcmp(ds0, ds1);
     ram.push(ret);
     DEBUG_WRAP_PRINT(" -> " << ret << std::endl);
-    pc += 1 + data.size();
 }
 
 void LavaProc::lava_wrap_strstr(const std::vector<uint8_t> &data)
@@ -1330,10 +1326,10 @@ void LavaProc::lava_wrap_strstr(const std::vector<uint8_t> &data)
     DEBUG_WRAP_PRINT(", ");
     DEBUG_WRAP_PRINT(ds1);
     DEBUG_WRAP_PRINT(")");
+    pc += 1 + data.size();
     uint32_t ret = lava_op_strstr(ds0, ds1);
     ram.push(ret);
     DEBUG_WRAP_PRINT(" -> " << ret << std::endl);
-    pc += 1 + data.size();
 }
 
 void LavaProc::lava_wrap_memset(const std::vector<uint8_t> &data)
@@ -1349,8 +1345,8 @@ void LavaProc::lava_wrap_memset(const std::vector<uint8_t> &data)
     DEBUG_WRAP_PRINT(ds2);
     DEBUG_WRAP_PRINT(")");
     DEBUG_WRAP_PRINT(std::endl);
-    lava_op_memset(ds0, ds1, ds2);
     pc += 1 + data.size();
+    lava_op_memset(ds0, ds1, ds2);
 }
 
 void LavaProc::lava_wrap_memcpy(const std::vector<uint8_t> &data)
@@ -1366,8 +1362,8 @@ void LavaProc::lava_wrap_memcpy(const std::vector<uint8_t> &data)
     DEBUG_WRAP_PRINT(ds2);
     DEBUG_WRAP_PRINT(")");
     DEBUG_WRAP_PRINT(std::endl);
-    lava_op_memcpy(ds0, ds1, ds2);
     pc += 1 + data.size();
+    lava_op_memcpy(ds0, ds1, ds2);
 }
 
 void LavaProc::lava_wrap_fopen(const std::vector<uint8_t> &data)
@@ -1379,10 +1375,10 @@ void LavaProc::lava_wrap_fopen(const std::vector<uint8_t> &data)
     DEBUG_WRAP_PRINT(", ");
     DEBUG_WRAP_PRINT(ds1);
     DEBUG_WRAP_PRINT(")");
+    pc += 1 + data.size();
     uint32_t ret = lava_op_fopen(ds0, ds1);
     ram.push(ret);
     DEBUG_WRAP_PRINT(" -> " << ret << std::endl);
-    pc += 1 + data.size();
 }
 
 void LavaProc::lava_wrap_fclose(const std::vector<uint8_t> &data)
@@ -1392,8 +1388,8 @@ void LavaProc::lava_wrap_fclose(const std::vector<uint8_t> &data)
     DEBUG_WRAP_PRINT(ds0);
     DEBUG_WRAP_PRINT(")");
     DEBUG_WRAP_PRINT(std::endl);
-    lava_op_fclose(ds0);
     pc += 1 + data.size();
+    lava_op_fclose(ds0);
 }
 
 void LavaProc::lava_wrap_fread(const std::vector<uint8_t> &data)
@@ -1411,10 +1407,10 @@ void LavaProc::lava_wrap_fread(const std::vector<uint8_t> &data)
     DEBUG_WRAP_PRINT(", ");
     DEBUG_WRAP_PRINT(ds3);
     DEBUG_WRAP_PRINT(")");
+    pc += 1 + data.size();
     uint32_t ret = lava_op_fread(ds0, ds1, ds2, ds3);
     ram.push(ret);
     DEBUG_WRAP_PRINT(" -> " << ret << std::endl);
-    pc += 1 + data.size();
 }
 
 void LavaProc::lava_wrap_fwrite(const std::vector<uint8_t> &data)
@@ -1432,10 +1428,10 @@ void LavaProc::lava_wrap_fwrite(const std::vector<uint8_t> &data)
     DEBUG_WRAP_PRINT(", ");
     DEBUG_WRAP_PRINT(ds3);
     DEBUG_WRAP_PRINT(")");
+    pc += 1 + data.size();
     uint32_t ret = lava_op_fwrite(ds0, ds1, ds2, ds3);
     ram.push(ret);
     DEBUG_WRAP_PRINT(" -> " << ret << std::endl);
-    pc += 1 + data.size();
 }
 
 void LavaProc::lava_wrap_fseek(const std::vector<uint8_t> &data)
@@ -1450,10 +1446,10 @@ void LavaProc::lava_wrap_fseek(const std::vector<uint8_t> &data)
     DEBUG_WRAP_PRINT(", ");
     DEBUG_WRAP_PRINT(ds2);
     DEBUG_WRAP_PRINT(")");
+    pc += 1 + data.size();
     uint32_t ret = lava_op_fseek(ds0, ds1, ds2);
     ram.push(ret);
     DEBUG_WRAP_PRINT(" -> " << ret << std::endl);
-    pc += 1 + data.size();
 }
 
 void LavaProc::lava_wrap_rewind(const std::vector<uint8_t> &data)
@@ -1463,8 +1459,8 @@ void LavaProc::lava_wrap_rewind(const std::vector<uint8_t> &data)
     DEBUG_WRAP_PRINT(ds0);
     DEBUG_WRAP_PRINT(")");
     DEBUG_WRAP_PRINT(std::endl);
-    lava_op_rewind(ds0);
     pc += 1 + data.size();
+    lava_op_rewind(ds0);
 }
 
 void LavaProc::lava_wrap_sprintf(const std::vector<uint8_t> &data)
@@ -1474,18 +1470,18 @@ void LavaProc::lava_wrap_sprintf(const std::vector<uint8_t> &data)
     DEBUG_WRAP_PRINT(ds0);
     DEBUG_WRAP_PRINT(")");
     DEBUG_WRAP_PRINT(std::endl);
-    lava_op_sprintf(ds0);
     pc += 1 + data.size();
+    lava_op_sprintf(ds0);
 }
 
 void LavaProc::lava_wrap_gettick(const std::vector<uint8_t> &data)
 {
     DEBUG_WRAP_PRINT("gettick(");
     DEBUG_WRAP_PRINT(")");
+    pc += 1 + data.size();
     uint32_t ret = lava_op_gettick();
     ram.push(ret);
     DEBUG_WRAP_PRINT(" -> " << ret << std::endl);
-    pc += 1 + data.size();
 }
 
 void LavaProc::lava_wrap_checkkey(const std::vector<uint8_t> &data)
@@ -1494,10 +1490,10 @@ void LavaProc::lava_wrap_checkkey(const std::vector<uint8_t> &data)
     uint32_t ds0 = ram.pop();
     DEBUG_WRAP_PRINT(ds0);
     DEBUG_WRAP_PRINT(")");
+    pc += 1 + data.size();
     uint32_t ret = lava_op_checkkey(ds0);
     ram.push(ret);
     DEBUG_WRAP_PRINT(" -> " << ret << std::endl);
-    pc += 1 + data.size();
 }
 
 void LavaProc::lava_wrap_releasekey(const std::vector<uint8_t> &data)
@@ -1507,8 +1503,8 @@ void LavaProc::lava_wrap_releasekey(const std::vector<uint8_t> &data)
     DEBUG_WRAP_PRINT(ds0);
     DEBUG_WRAP_PRINT(")");
     DEBUG_WRAP_PRINT(std::endl);
-    lava_op_releasekey(ds0);
     pc += 1 + data.size();
+    lava_op_releasekey(ds0);
 }
 
 void LavaProc::lava_wrap_getblock(const std::vector<uint8_t> &data)
@@ -1533,8 +1529,8 @@ void LavaProc::lava_wrap_getblock(const std::vector<uint8_t> &data)
     DEBUG_WRAP_PRINT(ds5);
     DEBUG_WRAP_PRINT(")");
     DEBUG_WRAP_PRINT(std::endl);
-    lava_op_getblock(ds0, ds1, ds2, ds3, ds4, ds5);
     pc += 1 + data.size();
+    lava_op_getblock(ds0, ds1, ds2, ds3, ds4, ds5);
 }
 
 void LavaProc::lava_wrap_setgraphmode(const std::vector<uint8_t> &data)
@@ -1543,10 +1539,10 @@ void LavaProc::lava_wrap_setgraphmode(const std::vector<uint8_t> &data)
     uint32_t ds0 = ram.pop();
     DEBUG_WRAP_PRINT(ds0);
     DEBUG_WRAP_PRINT(")");
+    pc += 1 + data.size();
     uint32_t ret = lava_op_setgraphmode(ds0);
     ram.push(ret);
     DEBUG_WRAP_PRINT(" -> " << ret << std::endl);
-    pc += 1 + data.size();
 }
 
 void LavaProc::lava_wrap_setbgcolor(const std::vector<uint8_t> &data)
@@ -1556,8 +1552,8 @@ void LavaProc::lava_wrap_setbgcolor(const std::vector<uint8_t> &data)
     DEBUG_WRAP_PRINT(ds0);
     DEBUG_WRAP_PRINT(")");
     DEBUG_WRAP_PRINT(std::endl);
-    lava_op_setbgcolor(ds0);
     pc += 1 + data.size();
+    lava_op_setbgcolor(ds0);
 }
 
 void LavaProc::lava_wrap_setfgcolor(const std::vector<uint8_t> &data)
@@ -1567,8 +1563,8 @@ void LavaProc::lava_wrap_setfgcolor(const std::vector<uint8_t> &data)
     DEBUG_WRAP_PRINT(ds0);
     DEBUG_WRAP_PRINT(")");
     DEBUG_WRAP_PRINT(std::endl);
-    lava_op_setfgcolor(ds0);
     pc += 1 + data.size();
+    lava_op_setfgcolor(ds0);
 }
 
 std::unordered_map<uint8_t, LavaProc::op_info_t> LavaProc::op_info = {
@@ -1621,8 +1617,8 @@ std::unordered_map<uint8_t, LavaProc::op_info_t> LavaProc::op_info = {
     {0x3b, op_info_t{"jmp", OpParam3, &LavaProc::lava_wrap_jmp}},
     {0x3c, op_info_t{"set_sp", (op_len_t)(OpParam0 | OpParamAddr), &LavaProc::lava_wrap_set_sp}},
     {0x3d, op_info_t{"call", OpParam3, &LavaProc::lava_wrap_call}},
-    {0x3e, op_info_t{"add_bp", (op_len_t)(OpParam1 | OpParamAddr), &LavaProc::lava_wrap_add_bp}},
-    {0x3f, op_info_t{"sub_bp", OpParam0, &LavaProc::lava_wrap_sub_bp}},
+    {0x3e, op_info_t{"push_frame", (op_len_t)(OpParam1 | OpParamAddr), &LavaProc::lava_wrap_push_frame}},
+    {0x3f, op_info_t{"pop_frame", OpParam0, &LavaProc::lava_wrap_pop_frame}},
     {0x40, op_info_t{"quit", OpParam0, &LavaProc::lava_wrap_quit}},
     {0x41, op_info_t{"preset", (op_len_t)(OpParam2 | OpParamAddr | OpParamPreset), &LavaProc::lava_wrap_preset}},
     {0x45, op_info_t{"qadd", OpParam2, &LavaProc::lava_wrap_qadd}},
