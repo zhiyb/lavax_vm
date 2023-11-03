@@ -14,19 +14,25 @@
 #include <unordered_map>
 #include <cstdint>
 
+#define STB_IMAGE_IMPLEMENTATION
+#include "stb_image.h"
+
 #include "lava.h"
 
 #define RESET_KEY_F5 1
 
-struct {
+static struct {
     struct {
         GLuint fb;
     } texture;
+    struct {
+        GLint mode;
+    } uniform;
 } gl_data;
 
 // Lava stuff
 
-Lava lava;
+static Lava lava;
 
 static struct {
     bool run;
@@ -40,10 +46,13 @@ class Callback: public LavaCallback
 {
 public:
     virtual int32_t delay_ms(uint32_t delay);
+    virtual int32_t get_ms();
+
     virtual void exit(uint32_t code);
 
     virtual int32_t getchar();
     virtual int32_t check_key(uint8_t key);
+    virtual int32_t in_key();
 
     virtual void refresh(uint8_t *framebuffer);
 
@@ -51,13 +60,14 @@ public:
     virtual void fclose(uint8_t fd);
     virtual std::vector<uint8_t> fread(uint8_t fd, uint32_t size);
     virtual int32_t fwrite(uint8_t fd, const std::vector<uint8_t> &data);
+    virtual int32_t fseek(uint8_t fd, int32_t ofs, fseek_mode_t mode);
 
 private:
     bool delay_pending = false;
     int tick = -1;
 };
 
-Callback cb;
+static Callback cb;
 
 #define SPECIAL_KEY 0x8000
 
@@ -68,7 +78,10 @@ static std::unordered_map<int, uint8_t> key_map = {
     {SPECIAL_KEY | GLUT_KEY_RIGHT, Lava::KeyRight},
     {SPECIAL_KEY | GLUT_KEY_F1,    Lava::KeyF1},
     {SPECIAL_KEY | GLUT_KEY_F2,    Lava::KeyF2},
-    {SPECIAL_KEY | GLUT_KEY_F3,    Lava::KeyHelp},
+    {SPECIAL_KEY | GLUT_KEY_F3,    Lava::KeyF3},
+    {SPECIAL_KEY | GLUT_KEY_F4,    Lava::KeyF4},
+    {SPECIAL_KEY | GLUT_KEY_F5,    Lava::KeyHelp},
+    //{SPECIAL_KEY | GLUT_KEY_F8,    Lava::KeyHelp},
     {27,                           Lava::KeyEsc},
     {0x0d,                         Lava::KeyEnter},
     {' ',                          Lava::KeySpace},
@@ -111,9 +124,16 @@ int lava_init(int argc, char *argv[])
     std::vector<uint8_t> fdata(1 * 1024 * 1024);
     fdata.resize(flava.rdbuf()->sgetn(reinterpret_cast<char *>(fdata.data()), fdata.size()));
     std::cout << "Read " << fdata.size() << " bytes" << std::endl;
-    if (!lava.load(fdata)) {
-        std::cerr << "Error: " << lava.getErrorMsg() << std::endl;
-        return 1;
+
+    try {
+        lava.load(fdata);
+
+    } catch (const std::exception &e) {
+        std::cerr << e.what() << std::endl;
+
+        lava_state.run = false;
+        lava_state.ret_code = -1;
+        //glutLeaveMainLoop();
     }
 
     return 0;
@@ -130,7 +150,6 @@ void lava_reset()
     lava_state.run = true;
 }
 
-void gl_refresh();
 void lava_dump()
 {
     // Dump RAM content
@@ -150,12 +169,12 @@ void lava_dump()
                     LAVA_MAX_HEIGHT * LAVA_MAX_WIDTH);
     f_fb_dump.close();
     std::cerr << "FB dump: fb.bin" << std::endl;
-    gl_refresh();
+    cb.refresh(lava.getFramebuffer());
 }
 
 // LAVA miscellaneous
 
-int Callback::delay_ms(uint32_t delay)
+int32_t Callback::delay_ms(uint32_t delay)
 {
     if (!delay_pending) {
         tick = glutGet(GLUT_ELAPSED_TIME);
@@ -177,25 +196,17 @@ int Callback::delay_ms(uint32_t delay)
     return 0;
 }
 
+int32_t Callback::get_ms()
+{
+    return glutGet(GLUT_ELAPSED_TIME);
+}
+
 void Callback::exit(uint32_t code)
 {
     lava_state.ret_code = code;
     lava_state.run = false;
     lava_dump();
     glutLeaveMainLoop();
-}
-
-void Callback::refresh(uint8_t *framebuffer)
-{
-    glTextureSubImage2D(gl_data.texture.fb, 0,
-                        0, 0, lava.getFramebufferWidth(), lava.getFramebufferHeight(),
-                        GL_RED, GL_UNSIGNED_BYTE, lava.getFramebuffer());
-    glutPostRedisplay();
-}
-
-void gl_refresh()
-{
-    cb.refresh(lava.getFramebuffer());
 }
 
 // LAVA file operations
@@ -269,6 +280,20 @@ void Callback::fclose(uint8_t fd)
     lava_state.file_map.erase(fd);
 }
 
+int32_t Callback::fseek(uint8_t fd, int32_t ofs, fseek_mode_t mode)
+{
+    auto it = lava_state.file_map.find(fd);
+    if (it == lava_state.file_map.end())
+        return -1;
+    auto &fstream = it->second;
+    std::ios::seekdir way = std::ios::beg;
+    if (mode == SeekCur)
+        way = std::ios::cur;
+    else if (mode == SeekEnd)
+        way = std::ios::end;
+    return fstream.seekg(ofs, way) ? 0 : -1;
+}
+
 // LAVA keyboard process
 
 void gl_keyboard_keys(uint8_t key, int x, int y)
@@ -287,7 +312,7 @@ void gl_keyboard_keys_up(uint8_t key, int x, int y)
 void gl_special_keys(int key, int x, int y)
 {
 #if RESET_KEY_F5
-    if (key == GLUT_KEY_F5) {
+    if (key == GLUT_KEY_F8) {
         lava_reset();
         return;
     }
@@ -313,7 +338,7 @@ uint8_t keycode_conv(int key)
         std::cerr << "Key code not found: " << key << std::endl;
         return 0;
     }
-    //std::cerr << "Key code found: " << key << std::endl;
+    std::cerr << "Key code found: " << key << " -> " << (uint32_t)k->second << std::endl;
     return k->second;
 }
 
@@ -340,6 +365,14 @@ int32_t Callback::check_key(uint8_t key)
             return Lava::True;
     }
     return Lava::False;
+}
+
+int32_t Callback::in_key()
+{
+    int32_t v = getchar();
+    if (v < 0)
+        return 0;
+    return v;
 }
 
 // LAVA main loop
@@ -391,8 +424,17 @@ GLuint gl_compile_shader(GLenum type, GLchar *source)
     return shader;
 }
 
+void load_palette()
+{
+    int x = 0, y = 0;
+    uint8_t *pdata = stbi_load("palette16.png", &x, &y, nullptr, 3);
+    stbi_image_free(pdata);
+}
+
 void gl_init()
 {
+    load_palette();
+
     // Shader program
     GLuint program = glCreateProgram();
 
@@ -412,6 +454,8 @@ void main()
     glAttachShader(program, gl_compile_shader(GL_FRAGMENT_SHADER, (GLchar *)R"(
 #version 330 core
 
+uniform uint mode;
+
 uniform sampler2D tex;
 
 in vec2 vMap;
@@ -420,8 +464,8 @@ out vec4 colour;
 void main()
 {
     float v = texture(tex, vMap).r;
-    v = 1. - (v * 16.);
-    //v = v * 16.;
+    v = v * 255. / (mode - 1u);
+    v = 1. - v;
     colour = vec4(v, v, v, 1.);
 }
     )"));
@@ -465,6 +509,8 @@ void main()
     glTextureSubImage2D(gl_data.texture.fb, 0,
                         0, 0, lava.getFramebufferWidth(), lava.getFramebufferHeight(),
                         GL_RED, GL_UNSIGNED_BYTE, lava.getFramebuffer());
+    gl_data.uniform.mode = glGetUniformLocation(program, "mode");
+    glUniform1ui(gl_data.uniform.mode, 1u << lava.getGraphicMode());
 
     const size_t nsamplers = 1;
     GLuint sampler[nsamplers];
@@ -478,7 +524,16 @@ void main()
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 }
 
-void gl_display()
+void Callback::refresh(uint8_t *framebuffer)
+{
+    glUniform1ui(gl_data.uniform.mode, 1u << lava.getGraphicMode());
+    glTextureSubImage2D(gl_data.texture.fb, 0,
+                        0, 0, lava.getFramebufferWidth(), lava.getFramebufferHeight(),
+                        GL_RED, GL_UNSIGNED_BYTE, lava.getFramebuffer());
+    glutPostRedisplay();
+}
+
+static void gl_display()
 {
 #if 0
     glTextureSubImage2D(gl_data.texture.fb, 0,
@@ -489,7 +544,7 @@ void gl_display()
     glutSwapBuffers();
 }
 
-void gl_reshape(int width, int height)
+static void gl_reshape(int width, int height)
 {
     glViewport(0, 0, width, height);
 }
@@ -535,6 +590,7 @@ int main(int argc, char *argv[])
         return 1;
     }
 
-    glutMainLoop();
+    if (lava_state.run)
+        glutMainLoop();
     return lava_state.ret_code;
 }

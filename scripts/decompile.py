@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 
+import argparse
 import op
 
 ram_size = 16
@@ -16,13 +17,13 @@ def parse_op(data, ofs):
 
     size = op.op_psize[ptype]
     if callable(size):
-        size = size(data, ofs, ram_size)
+        size = size(data, ofs + 1, ram_size)
     size += 1
 
     op_data = data[ofs : ofs+size]
     op_data_hex = [f"{v:02x}" for v in op_data]
     op_params = op.op_pdata[ptype](op_data[1:], ram_size)
-    print(f"{name}({op_params}) - {op_data_hex}")
+    print(f"{ofs:#010x}: {name}({op_params}) - {op_data_hex}")
 
     return size
 
@@ -58,7 +59,13 @@ def parse(data):
 
 
 def main():
-    with open("test.lav", "rb") as flav:
+    parser = argparse.ArgumentParser(
+        prog='LavDecompiler',
+        description='Decompile .lav binary file')
+    parser.add_argument('lavfile', help='Input .lav file')
+    args = parser.parse_args()
+
+    with open(args.lavfile, "rb") as flav:
         data = flav.read()
         parse(data)
 

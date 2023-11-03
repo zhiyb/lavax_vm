@@ -3,7 +3,7 @@
 #include <cstdint>
 #include <vector>
 #include <string>
-#include <map>
+#include <unordered_map>
 #include <functional>
 
 #include "lava_ram.h"
@@ -19,7 +19,7 @@ public:
     void setCallbacks(LavaCallback *cb) {this->cb = cb;}
     void setDisp(LavaDisp *disp) {this->disp = disp;}
 
-    bool load(const std::vector<uint8_t> &source, uint32_t rambits, bool pen_input);
+    void load(const std::vector<uint8_t> &source, uint32_t rambits, bool pen_input);
 
     const std::vector<uint8_t> &inspectRam() {return ram.data();}
 
@@ -37,13 +37,17 @@ private:
 
     // Opcode length including params
     enum op_len_t {
-        OpParam0    = 1 + 0,
-        OpParam1    = 1 + 1,
-        OpParam2    = 1 + 2,
-        OpParam3    = 1 + 3,
-        OpParam4    = 1 + 4,
-        OpParamAddr = 0x0100,  // Add 2 or 3 bytes based on rambits
-        OpParamStr  = 0x0200,
+        // Constant param length
+        OpParamBaseMask = 0xff,
+        OpParam0        = 1 + 0,
+        OpParam1        = 1 + 1,
+        OpParam2        = 1 + 2,
+        OpParam3        = 1 + 3,
+        OpParam4        = 1 + 4,
+        // Special param length
+        OpParamAddr     = 0x0100,  // Add 2 or 3 bytes based on rambits
+        OpParamStr      = 0x0200,
+        OpParamPreset   = 0x0400,
     };
 
     // Map from opcode to functions
@@ -52,15 +56,13 @@ private:
         op_len_t len;
         std::function<void(LavaProc *, const std::vector<uint8_t> &)> func;
     };
-    static std::map<uint8_t, op_info_t> op_info;
+    static std::unordered_map<uint8_t, op_info_t> op_info;
 
     // Map from code address to execution functions
     struct op_t {
-        std::function<void(LavaProc *, const std::vector<uint8_t> &)> func;
-        std::vector<uint8_t> data;
-        uint8_t opcode;
+        std::function<void()> func;
     };
-    std::map<uint32_t, op_t> op_exec;
+    std::unordered_map<uint32_t, op_t> op_exec;
     std::vector<uint8_t> source;
 
     // Stallable callback functions
@@ -74,9 +76,10 @@ private:
     LavaDisp *disp;
     LavaRam ram;
 
-    uint32_t rambits, ram_mask;
+    uint32_t rambits;
     bool pen_input;
 
     uint32_t pc;
     uint32_t flagv;
+    int32_t seed;
 };

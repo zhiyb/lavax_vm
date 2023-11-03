@@ -1,4 +1,5 @@
 #include <iostream>
+#include <stdexcept>
 
 #include "lava.h"
 
@@ -7,16 +8,16 @@ Lava::Lava()
     proc.setDisp(&disp);
 }
 
-bool Lava::load(const std::vector<uint8_t> &source)
+void Lava::load(const std::vector<uint8_t> &source)
 {
     // Check 16-byte file header
     const uint8_t *header = source.data();
     if (source.size() < 16)
-        return error("File too short");
+        throw std::runtime_error("File too short");
 
     // File signature
     if (!(header[0] == 'L' && header[1] == 'A' && header[2] == 'V' && header[3] == 0x12))
-        return error("File signature mismatch");
+        throw std::runtime_error("File signature mismatch");
 
     // Configurations
     uint8_t cfg = header[8];
@@ -35,7 +36,7 @@ bool Lava::load(const std::vector<uint8_t> &source)
         rambits = 24;
         break;
     default:
-        return error("Unknown RAM mode");
+        throw std::runtime_error("Unknown RAM mode: " + std::to_string(cfg));
     }
 
     LavaDisp::mode_t gmode;
@@ -50,7 +51,7 @@ bool Lava::load(const std::vector<uint8_t> &source)
         gmode = LavaDisp::Graphic256;
         break;
     default:
-        return error("Unknown graphic mode");
+        throw std::runtime_error("Unknown graphic mode: " + std::to_string(cfg));
     }
 
     // Screen size
@@ -62,11 +63,9 @@ bool Lava::load(const std::vector<uint8_t> &source)
 
     disp.setMode(gmode);
     disp.setSize(w, h);
+    disp.clearScreen();
 
-    if (!proc.load(source, rambits, pen_input))
-        return false;
-
-    return true;
+    proc.load(source, rambits, pen_input);
 }
 
 void Lava::reset()

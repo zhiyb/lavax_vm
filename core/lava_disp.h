@@ -12,7 +12,6 @@ public:
     void loadLvmBin(const std::vector<uint8_t> &data) {this->lvm_data = data;}
 
     enum mode_t {
-        GraphicInvalid = 0,
         GraphicMono    = 1,
         Graphic16      = 4,
         Graphic256     = 8,
@@ -36,16 +35,22 @@ public:
     // Draw block
     void drawBlock(uint16_t x, uint16_t y, uint16_t w, uint16_t h, uint8_t cfg,
                    const std::vector<uint8_t> &data);
+    // Draw block, with 1 bbp source data
+    void drawBlockMono(uint16_t x, uint16_t y, uint16_t w, uint16_t h, uint8_t cfg,
+                       const std::vector<uint8_t> &data);
     // Draw rectangle
     void drawRectangle(uint16_t x0, uint16_t x1, uint16_t y0, uint16_t y1, uint8_t cfg);
     // Draw text
     void drawText(const std::vector<uint8_t> &str, uint16_t x, uint16_t y, uint8_t cfg);
 
+    // Read framebuffer data
+    std::vector<uint8_t> getBlock(bool active, uint16_t x, uint16_t y, uint16_t w, uint16_t h);
+
     void setForegroundColour(uint8_t c) {fg_colour = c & colour_mask;}
     void setBackgroundColour(uint8_t c) {bg_colour = c & colour_mask;}
 
 #if LAVA_DOUBLE_BUFFER
-    uint8_t *getFramebuffer() {return &framebuffer[fb_disp][0][0];}
+    uint8_t *getFramebuffer() {return &framebuffer[1 - fb_active][0][0];}
     void framebufferSwap();
 #else
     uint8_t *getFramebuffer() {return &framebuffer[0][0][0];}
@@ -69,7 +74,7 @@ private:
     std::vector<uint8_t> lvm_data;
 
     uint8_t framebuffer[LAVA_DOUBLE_BUFFER + 1][LAVA_MAX_HEIGHT][LAVA_MAX_WIDTH];
-    uint32_t fb_disp;
+    uint32_t fb_active;     // Current working buffer
     uint16_t width, height;
     mode_t graphic_mode;
     uint8_t fg_colour, bg_colour, colour_mask;

@@ -8,6 +8,7 @@ PARAM_STR     = 0x04   # variable
 PARAM_ADDR    = 0x05   # 2 or 3 bytes
 PARAM_ADDR_U8 = 0x06   # 3 or 4 bytes
 PARAM_JMP     = 0x07   # 3 bytes
+PARAM_PRESET  = 0x08   # variable
 
 op = {
     # OP:  Name,         params,     pop, push
@@ -21,54 +22,98 @@ op = {
     0x08: ("pushg_i16",    PARAM_ADDR,    1, 1),
     0x09: ("pushg_i32",    PARAM_ADDR,    1, 1),
     0x0a: ("pusha_u8",     PARAM_ADDR,    1, 1),
+    0x0b: ("pusha_i16",    PARAM_ADDR,    1, 1),
+    0x0c: ("pusha_i32",    PARAM_ADDR,    1, 1),
     0x0d: ("push_str",     PARAM_STR,     0, 1),
+    0x0e: ("pushlv_u8",    PARAM_ADDR,    0, 1),
+    0x0f: ("pushlv_i16",   PARAM_ADDR,    0, 1),
+    0x10: ("pushlv_i32",   PARAM_ADDR,    0, 1),
+    0x11: ("pushlg_char",  PARAM_ADDR,    1, 1),
+    0x14: ("pushla_u8",    PARAM_ADDR,    1, 1),
+    0x16: ("pushla_i32",   PARAM_ADDR,    1, 1),
     0x17: ("pusha_i32",    PARAM_ADDR,    1, 1),
-    0x1f: ("INC",          PARAM_NONE,    1, 1),
-    0x20: ("DEC",          PARAM_NONE,    1, 1),
+    0x19: ("pushl_i32",    PARAM_ADDR,    0, 1),
+    0x1d: ("pre_inc",      PARAM_NONE,    1, 1),
+    0x1e: ("pre_dec",      PARAM_NONE,    1, 1),
+    0x1f: ("post_inc",     PARAM_NONE,    1, 1),
+    0x20: ("post_dec",     PARAM_NONE,    1, 1),
     0x21: ("add",          PARAM_NONE,    2, 1),
     0x22: ("sub",          PARAM_NONE,    2, 1),
+    0x23: ("and",          PARAM_NONE,    2, 1),
+    0x24: ("or",           PARAM_NONE,    2, 1),
+    0x26: ("xor",          PARAM_NONE,    2, 1),
     0x27: ("land",         PARAM_NONE,    2, 1),
     0x28: ("lor",          PARAM_NONE,    2, 1),
     0x2a: ("mul",          PARAM_NONE,    2, 1),
     0x2b: ("div",          PARAM_NONE,    2, 1),
+    0x2c: ("mod",          PARAM_NONE,    2, 1),
     0x2f: ("equ",          PARAM_NONE,    2, 1),
+    0x30: ("neq",          PARAM_NONE,    2, 1),
     0x31: ("le",           PARAM_NONE,    2, 1),
     0x32: ("ge",           PARAM_NONE,    2, 1),
     0x33: ("great",        PARAM_NONE,    2, 1),
     0x34: ("less",         PARAM_NONE,    2, 1),
     0x35: ("let",          PARAM_NONE,    2, 1),
+    0x36: ("ptr",          PARAM_NONE,    1, 1),
     0x38: ("pop",          PARAM_NONE,    1, 0),
     0x39: ("jmpe",         PARAM_JMP,     0, 0),
+    0x3a: ("jmpn",         PARAM_JMP,     0, 0),
     0x3b: ("jmp",          PARAM_JMP,     0, 0),
     0x3c: ("set_sp",       PARAM_ADDR,    0, 0),
+    0x3d: ("call",         PARAM_JMP,     0, 0),
     0x3e: ("add_bp",       PARAM_ADDR_U8, 0, 0),
+    0x3f: ("sub_bp",       PARAM_NONE,    0, 0),
     0x40: ("quit",         PARAM_NONE,    0, 0),
+    0x41: ("preset",       PARAM_PRESET,  0, 0),
     0x45: ("qadd",         PARAM_I16,     1, 1),
     0x46: ("qsub",         PARAM_I16,     1, 1),
     0x47: ("qmul",         PARAM_I16,     1, 1),
     0x48: ("qdiv",         PARAM_I16,     1, 1),
+    0x49: ("qmod",         PARAM_I16,     1, 1),
     0x4a: ("qlshift",      PARAM_I16,     1, 1),
     0x4b: ("qrshift",      PARAM_I16,     1, 1),
     0x4c: ("qequ",         PARAM_I16,     1, 1),
     0x4d: ("qneq",         PARAM_I16,     1, 1),
     0x4e: ("qgreat",       PARAM_I16,     1, 1),
     0x4f: ("qless",        PARAM_I16,     1, 1),
+    0x50: ("qge",          PARAM_I16,     1, 1),
+    0x51: ("qle",          PARAM_I16,     1, 1),
     0x81: ("getchar",      PARAM_NONE,    0, 1),
+    0x82: ("printf",       PARAM_NONE,    1, 0),
+    0x83: ("strcpy",       PARAM_NONE,    2, 0),
     0x84: ("strlen",       PARAM_NONE,    1, 1),
+    0x85: ("setscreen",    PARAM_NONE,    1, 0),
     0x87: ("delay",        PARAM_NONE,    1, 0),
     0x88: ("writeblock",   PARAM_NONE,    6, 0),
-    0x89: ("scroll",       PARAM_NONE,    0, 0),
+    0x89: ("fbswap",       PARAM_NONE,    0, 0),
     0x8a: ("textout",      PARAM_NONE,    4, 0),
     0x8b: ("block",        PARAM_NONE,    5, 0),
     0x8c: ("rectangle",    PARAM_NONE,    5, 0),
     0x8d: ("exit",         PARAM_NONE,    1, 0),
     0x8e: ("clearscreen",  PARAM_NONE,    0, 0),
+    0x90: ("rand",         PARAM_NONE,    0, 1),
+    0x91: ("srand",        PARAM_NONE,    1, 0),
+    0x92: ("locate",       PARAM_NONE,    2, 0),
+    0x93: ("inkey",        PARAM_NONE,    0, 1),
+    0x94: ("point",        PARAM_NONE,    3, 0),
+    0x96: ("line",         PARAM_NONE,    5, 0),
+    0x98: ("circle",       PARAM_NONE,    5, 0),
+    0xa7: ("strchr",       PARAM_NONE,    2, 1),
+    0xa8: ("strcmp",       PARAM_NONE,    2, 1),
+    0xa9: ("strstr",       PARAM_NONE,    2, 1),
+    0xac: ("memset",       PARAM_NONE,    3, 0),
+    0xad: ("memcpy",       PARAM_NONE,    3, 0),
     0xae: ("fopen",        PARAM_NONE,    2, 1),
     0xaf: ("fclose",       PARAM_NONE,    1, 0),
     0xb0: ("fread",        PARAM_NONE,    4, 1),
     0xb1: ("fwrite",       PARAM_NONE,    4, 1),
+    0xb2: ("fseek",        PARAM_NONE,    3, 1),
+    0xb5: ("rewind",       PARAM_NONE,    1, 0),
     0xb8: ("sprintf",      PARAM_NONE,    1, 0),
+    0xbb: ("gettick",      PARAM_NONE,    0, 1),
     0xbc: ("checkkey",     PARAM_NONE,    1, 1),
+    0xc6: ("releasekey",   PARAM_NONE,    1, 0),
+    0xc7: ("getblock",     PARAM_NONE,    6, 0),
     0xcb: ("setgraphmode", PARAM_NONE,    1, 1),
     0xcc: ("setbgcolor",   PARAM_NONE,    1, 0),
     0xcd: ("setfgcolor",   PARAM_NONE,    1, 0),
@@ -124,13 +169,19 @@ def op_str_size(data, ofs, rambits):
     # TODO secret XOR
     while data[ofs + i] != 0:
         i += 1
-    return i
+    return i + 1
 
 def op_addr_size(data, ofs, rambits):
     return 3 if rambits > 16 else 2
 
 def op_addrd_size(data, ofs, rambits):
     return 4 if rambits > 16 else 3
+
+def op_preset_size(data, ofs, rambits):
+    size = op_addr_size(data, ofs, rambits)
+    dlen = data[ofs + size] + (data[ofs + size + 1] << 8)
+    size += 2 + dlen
+    return size
 
 op_psize = {
     PARAM_NONE:    0,
@@ -141,6 +192,7 @@ op_psize = {
     PARAM_ADDR:    op_addr_size,
     PARAM_ADDR_U8: op_addrd_size,
     PARAM_JMP:     3,
+    PARAM_PRESET:  op_preset_size,
 }
 
 def op_vaddr(d, ram_size):
@@ -158,4 +210,5 @@ op_pdata = {
     PARAM_ADDR:    lambda d, ram_size: f"{op_vaddr(d, ram_size):#x}",
     PARAM_ADDR_U8: lambda d, ram_size: f"{op_vaddr(d, ram_size):#x}, {d[op_vaddr_size(ram_size)]}",
     PARAM_JMP:     lambda d, ram_size: f"{d[0] + (d[1] << 8) + (d[2] << 16):#x}",
+    PARAM_PRESET:  lambda d, ram_size: f"{op_vaddr(d, ram_size):#x}, {d[op_vaddr_size(ram_size)+2:]}"
 }

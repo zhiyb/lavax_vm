@@ -33,7 +33,7 @@
 | 0x1a | push_text | 1 | ? |
 | 0x1b | push_graph | 1 | ? |
 | 0x1c | push_sub0 | 1 | ? |
-| 0x13 | cal_inc | 1 | ? |
+| 0x1d | cal_inc | 1 | ? |
 | 0x1e | cal_dec | 1 | ? |
 | 0x1f | cal_INC | 1 | ? |
 | 0x20 | cal_DEC | 1 | ? |
