@@ -19,7 +19,6 @@ bool LavaProc::load(const std::vector<uint8_t> &source, uint32_t rambits, bool p
     this->pen_input = pen_input;
 
     ram.init(rambits);
-
     pc = 16;
 
     uint32_t ofs = pc;
@@ -67,6 +66,13 @@ uint32_t LavaProc::parse(uint32_t ofs)
         opcode,
     };
     return size;
+}
+
+void LavaProc::reset()
+{
+    ram.init(rambits);
+    pc = 16;
+    cb_func.func = nullptr;
 }
 
 void LavaProc::run()
@@ -395,8 +401,24 @@ uint32_t LavaProc::lava_op_qdiv(int16_t dp0, uint32_t ds0)
 
 uint32_t LavaProc::lava_op_qlshift(int16_t dp0, uint32_t ds0)
 {
-    TODO();
-    return 0;
+    uint32_t v = ds0;
+    int32_t shift = dp0;
+    if (shift >= 0)
+        v <<= shift;
+    else
+        v >>= -shift;
+    return v;
+}
+
+uint32_t LavaProc::lava_op_qrshift(int16_t dp0, uint32_t ds0)
+{
+    uint32_t v = ds0;
+    int32_t shift = dp0;
+    if (shift >= 0)
+        v >>= shift;
+    else
+        v <<= -shift;
+    return v;
 }
 
 uint32_t LavaProc::lava_op_qequ(int16_t dp0, uint32_t ds0)

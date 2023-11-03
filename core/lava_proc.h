@@ -23,6 +23,7 @@ public:
 
     const std::vector<uint8_t> &inspectRam() {return ram.data();}
 
+    void reset();
     void run();
 
 private:
@@ -64,7 +65,7 @@ private:
 
     // Stallable callback functions
     struct {
-        bool stack = false;
+        bool stack;
         std::function<int()> func;
     } cb_func;
 

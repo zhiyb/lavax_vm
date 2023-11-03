@@ -333,6 +333,14 @@ void LavaProc::lava_wrap_qlshift(const std::vector<uint8_t> &data)
     ram.push(ret);
 }
 
+void LavaProc::lava_wrap_qrshift(const std::vector<uint8_t> &data)
+{
+    int16_t dp0 = (int16_t)(data[0] | (data[1] << 8));
+    uint32_t ds0 = ram.pop();
+    uint32_t ret = lava_op_qrshift(dp0, ds0);
+    ram.push(ret);
+}
+
 void LavaProc::lava_wrap_qequ(const std::vector<uint8_t> &data)
 {
     int16_t dp0 = (int16_t)(data[0] | (data[1] << 8));
@@ -559,6 +567,7 @@ std::map<uint8_t, LavaProc::op_info_t> LavaProc::op_info = {
     {0x47, op_info_t{"qmul", OpParam2, &LavaProc::lava_wrap_qmul}},
     {0x48, op_info_t{"qdiv", OpParam2, &LavaProc::lava_wrap_qdiv}},
     {0x4a, op_info_t{"qlshift", OpParam2, &LavaProc::lava_wrap_qlshift}},
+    {0x4b, op_info_t{"qrshift", OpParam2, &LavaProc::lava_wrap_qrshift}},
     {0x4c, op_info_t{"qequ", OpParam2, &LavaProc::lava_wrap_qequ}},
     {0x4d, op_info_t{"qneq", OpParam2, &LavaProc::lava_wrap_qneq}},
     {0x4e, op_info_t{"qgreat", OpParam2, &LavaProc::lava_wrap_qgreat}},

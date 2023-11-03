@@ -55,6 +55,7 @@ public:
     bool load(const std::vector<uint8_t> &source);
     void loadLvmBin(const std::vector<uint8_t> &data) {disp.loadLvmBin(data);}
 
+    void reset();
     void run() {proc.run();}
 
     const std::vector<uint8_t> &inspectRam() {return proc.inspectRam();}

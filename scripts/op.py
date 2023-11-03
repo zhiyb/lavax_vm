@@ -48,6 +48,7 @@ op = {
     0x47: ("qmul",         PARAM_I16,     1, 1),
     0x48: ("qdiv",         PARAM_I16,     1, 1),
     0x4a: ("qlshift",      PARAM_I16,     1, 1),
+    0x4b: ("qrshift",      PARAM_I16,     1, 1),
     0x4c: ("qequ",         PARAM_I16,     1, 1),
     0x4d: ("qneq",         PARAM_I16,     1, 1),
     0x4e: ("qgreat",       PARAM_I16,     1, 1),

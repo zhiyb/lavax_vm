@@ -27,7 +27,7 @@ LavaDisp::LavaDisp()
     graphic_mode = GraphicInvalid;
     fb_disp = 0;
     bg_colour = 0;
-    fg_colour = 1;
+    fg_colour = 0xff;
     refresh = 0;
 
     clearScreen();
@@ -47,6 +47,9 @@ void LavaDisp::setMode(mode_t mode)
         colour_mask = 1;
         break;
     }
+
+    fg_colour = colour_mask;
+    bg_colour = 0;
 }
 
 void LavaDisp::clearScreen()

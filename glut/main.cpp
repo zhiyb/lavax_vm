@@ -16,6 +16,8 @@
 
 #include "lava.h"
 
+#define RESET_KEY_F5 1
+
 struct {
     struct {
         GLuint fb;
@@ -117,6 +119,40 @@ int lava_init(int argc, char *argv[])
     return 0;
 }
 
+void lava_reset()
+{
+    std::cerr << "LAVA reset" << std::endl;
+    lava.reset();
+    while (!lava_state.key_seq.empty())
+        lava_state.key_seq.pop();
+    lava_state.key_state.clear();
+    lava_state.file_map.clear();
+    lava_state.run = true;
+}
+
+void gl_refresh();
+void lava_dump()
+{
+    // Dump RAM content
+    auto const &ram = lava.inspectRam();
+    std::ofstream f_ram_dump;
+    f_ram_dump.open("ram.bin", std::ios::binary | std::ios::out);
+    f_ram_dump.write(reinterpret_cast<const char *>(ram.data()), ram.size());
+    f_ram_dump.close();
+    std::cerr << "RAM dump: ram.bin" << std::endl;
+
+    // Force a framebuffer swap then dump
+    lava.framebufferSwap();
+    auto fb = lava.getFramebuffer();
+    std::ofstream f_fb_dump;
+    f_fb_dump.open("fb.bin", std::ios::binary | std::ios::out);
+    f_fb_dump.write(reinterpret_cast<const char *>(fb),
+                    LAVA_MAX_HEIGHT * LAVA_MAX_WIDTH);
+    f_fb_dump.close();
+    std::cerr << "FB dump: fb.bin" << std::endl;
+    gl_refresh();
+}
+
 // LAVA miscellaneous
 
 int Callback::delay_ms(uint32_t delay)
@@ -128,7 +164,7 @@ int Callback::delay_ms(uint32_t delay)
     }
 
     int delta = glutGet(GLUT_ELAPSED_TIME) - tick;
-#if 1
+#if 0
     // Shorter delay for debugging
     if (delta * 10 < delay)
         return -1;
@@ -145,6 +181,7 @@ void Callback::exit(uint32_t code)
 {
     lava_state.ret_code = code;
     lava_state.run = false;
+    lava_dump();
     glutLeaveMainLoop();
 }
 
@@ -249,6 +286,13 @@ void gl_keyboard_keys_up(uint8_t key, int x, int y)
 
 void gl_special_keys(int key, int x, int y)
 {
+#if RESET_KEY_F5
+    if (key == GLUT_KEY_F5) {
+        lava_reset();
+        return;
+    }
+#endif
+
     if (!lava_state.run)
         glutLeaveMainLoop();
     key |= SPECIAL_KEY;
@@ -269,7 +313,7 @@ uint8_t keycode_conv(int key)
         std::cerr << "Key code not found: " << key << std::endl;
         return 0;
     }
-    std::cerr << "Key code found: " << key << std::endl;
+    //std::cerr << "Key code found: " << key << std::endl;
     return k->second;
 }
 
@@ -299,28 +343,6 @@ int32_t Callback::check_key(uint8_t key)
 }
 
 // LAVA main loop
-
-void lava_dump()
-{
-    // Dump RAM content
-    auto const &ram = lava.inspectRam();
-    std::ofstream f_ram_dump;
-    f_ram_dump.open("ram.bin", std::ios::binary | std::ios::out);
-    f_ram_dump.write(reinterpret_cast<const char *>(ram.data()), ram.size());
-    f_ram_dump.close();
-    std::cerr << "RAM dump: ram.bin" << std::endl;
-
-    // Force a framebuffer swap then dump
-    lava.framebufferSwap();
-    auto fb = lava.getFramebuffer();
-    std::ofstream f_fb_dump;
-    f_fb_dump.open("fb.bin", std::ios::binary | std::ios::out);
-    f_fb_dump.write(reinterpret_cast<const char *>(fb),
-                    LAVA_MAX_HEIGHT * LAVA_MAX_WIDTH);
-    f_fb_dump.close();
-    std::cerr << "FB dump: fb.bin" << std::endl;
-    gl_refresh();
-}
 
 void gl_idle()
 {

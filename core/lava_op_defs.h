@@ -110,6 +110,9 @@ uint32_t lava_op_qdiv(int16_t dp0, uint32_t ds0);
 void lava_wrap_qlshift(const std::vector<uint8_t> &data);
 uint32_t lava_op_qlshift(int16_t dp0, uint32_t ds0);
 
+void lava_wrap_qrshift(const std::vector<uint8_t> &data);
+uint32_t lava_op_qrshift(int16_t dp0, uint32_t ds0);
+
 void lava_wrap_qequ(const std::vector<uint8_t> &data);
 uint32_t lava_op_qequ(int16_t dp0, uint32_t ds0);
 

@@ -68,3 +68,10 @@ bool Lava::load(const std::vector<uint8_t> &source)
 
     return true;
 }
+
+void Lava::reset()
+{
+    disp.setMode(disp.getMode());
+    disp.clearScreen();
+    proc.reset();
+}

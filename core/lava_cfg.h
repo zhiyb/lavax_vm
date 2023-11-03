@@ -8,5 +8,6 @@
 
 #define LAVA_STACK_OFFSET   0x1b00
 #define LAVA_STRING_OFFSET  0x1c00
+#define LAVA_STRING_LIMIT   768
 
 #define LAVA_DOUBLE_BUFFER  1

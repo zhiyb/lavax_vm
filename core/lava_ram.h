@@ -3,6 +3,7 @@
 #include <cstdint>
 #include <vector>
 #include <string>
+#include <unordered_map>
 
 #include <stdexcept>
 #define RAM_TODO()  throw std::runtime_error("RAM_TODO: " + std::to_string(__LINE__))
@@ -45,7 +46,7 @@ public:
         return v;
     }
 
-    uint32_t pushString(const std::vector<uint8_t> &str);
+    uint32_t pushString(const std::vector<uint8_t> &dstr);
 
 
     uint8_t readU8(uint32_t a) {return ram[a];}
@@ -145,8 +146,16 @@ public:
 
 
 private:
+    std::string to_string(const std::vector<uint8_t> &data)
+    {
+        return std::string(reinterpret_cast<const char *>(data.data()), data.size() - 1);
+    }
+
     std::vector<uint8_t> ram;
     uint32_t ram_bits, ram_mask;
     uint32_t stack, stack_string;
     uint32_t stack_local, stack_local_bp;
+
+    // Stored pushed string constants
+    std::unordered_map<std::string, uint32_t> str_map;
 };
