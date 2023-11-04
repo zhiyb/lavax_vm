@@ -69,31 +69,7 @@ private:
 
 static Callback cb;
 
-#define SPECIAL_KEY 0x8000
-
-static std::unordered_map<int, uint8_t> key_map = {
-    {SPECIAL_KEY | GLUT_KEY_UP,    Lava::KeyUp},
-    {SPECIAL_KEY | GLUT_KEY_DOWN,  Lava::KeyDown},
-    {SPECIAL_KEY | GLUT_KEY_LEFT,  Lava::KeyLeft},
-    {SPECIAL_KEY | GLUT_KEY_RIGHT, Lava::KeyRight},
-    {SPECIAL_KEY | GLUT_KEY_F1,    Lava::KeyF1},
-    {SPECIAL_KEY | GLUT_KEY_F2,    Lava::KeyF2},
-    {SPECIAL_KEY | GLUT_KEY_F3,    Lava::KeyF3},
-    {SPECIAL_KEY | GLUT_KEY_F4,    Lava::KeyF4},
-    {SPECIAL_KEY | GLUT_KEY_F5,    Lava::KeyHelp},
-    //{SPECIAL_KEY | GLUT_KEY_F8,    Lava::KeyHelp},
-    {27,                           Lava::KeyEsc},
-    {0x0d,                         Lava::KeyEnter},
-    {' ',                          Lava::KeySpace},
-};
-
-static void key_map_init()
-{
-    for (char c = 'a'; c <= 'z'; c++)
-        key_map[c] = c;
-    for (char c = 'A'; c <= 'Z'; c++)
-        key_map[c] = c;
-}
+static void key_map_init();
 
 static int lava_init(int argc, char *argv[])
 {
@@ -306,7 +282,34 @@ int32_t Callback::remove(std::string path)
     return 1;
 }
 
-// LAVA keyboard process
+// LAVA keyboard operations
+
+#define SPECIAL_KEY   0x8000
+#define CONVERTED_KEY 0x4000
+
+static std::unordered_map<int, uint8_t> key_map = {
+    {SPECIAL_KEY | GLUT_KEY_UP,    Lava::KeyUp},
+    {SPECIAL_KEY | GLUT_KEY_DOWN,  Lava::KeyDown},
+    {SPECIAL_KEY | GLUT_KEY_LEFT,  Lava::KeyLeft},
+    {SPECIAL_KEY | GLUT_KEY_RIGHT, Lava::KeyRight},
+    {SPECIAL_KEY | GLUT_KEY_F1,    Lava::KeyF1},
+    {SPECIAL_KEY | GLUT_KEY_F2,    Lava::KeyF2},
+    {SPECIAL_KEY | GLUT_KEY_F3,    Lava::KeyF3},
+    {SPECIAL_KEY | GLUT_KEY_F4,    Lava::KeyF4},
+    {SPECIAL_KEY | GLUT_KEY_F5,    Lava::KeyHelp},
+    //{SPECIAL_KEY | GLUT_KEY_F8,    Lava::KeyHelp},
+    {27,                           Lava::KeyEsc},
+    {0x0d,                         Lava::KeyEnter},
+    {' ',                          Lava::KeySpace},
+};
+
+static void key_map_init()
+{
+    for (char c = 'a'; c <= 'z'; c++)
+        key_map[c] = c;
+    for (char c = 'A'; c <= 'Z'; c++)
+        key_map[c] = c;
+}
 
 static void gl_keyboard_keys(uint8_t key, int x, int y)
 {
@@ -345,6 +348,9 @@ static void gl_special_keys_up(int key, int x, int y)
 
 static uint8_t keycode_conv(int key)
 {
+    if (key & CONVERTED_KEY)
+        return key & 0xff;
+
     auto const &k = key_map.find(key);
     if (k == key_map.cend()) {
         std::cerr << "Key code not found: " << key << std::endl;
@@ -397,6 +403,57 @@ void Callback::releaseKey(uint8_t key)
             return;
         }
     }
+}
+
+void gl_joystick(unsigned int buttonMask, int x, int y, int z)
+{
+    const int threshold = 800;
+    std::unordered_set<uint8_t> keys;
+    if (x >= threshold)
+        keys.insert(Lava::KeyRight);
+    else if (x <= -threshold)
+        keys.insert(Lava::KeyLeft);
+    if (y >= threshold)
+        keys.insert(Lava::KeyDown);
+    else if (y <= -threshold)
+        keys.insert(Lava::KeyUp);
+
+    if (buttonMask & 0x01)
+        keys.insert(Lava::KeyEnter);
+    if (buttonMask & 0x02)
+        keys.insert(Lava::KeyEsc);
+    if (buttonMask & 0x03)
+        keys.insert(Lava::KeyF4);
+    if (buttonMask & 0x04)
+        keys.insert(Lava::KeyF4);
+    if (buttonMask & 0x40)
+        keys.insert(Lava::KeyF4);
+    if (buttonMask & 0x80)
+        keys.insert(Lava::KeyHelp);
+
+    static std::unordered_set<uint8_t> prev_keys;
+    bool changed = false;
+    for (auto const k: keys) {
+        if (prev_keys.find(k) == prev_keys.cend()) {
+            // New key pressed
+            lava_state.key_seq.push(CONVERTED_KEY | k);
+            lava_state.key_state.insert(CONVERTED_KEY | k);
+            changed = true;
+        }
+    }
+    for (auto const k: prev_keys) {
+        if (keys.find(k) == keys.cend()) {
+            // Key released
+            lava_state.key_state.erase(CONVERTED_KEY | k);
+            changed = true;
+        }
+    }
+    prev_keys = keys;
+
+#if 1
+    if (changed)
+        std::cerr << __func__ << ": " << buttonMask << ", " << x << ", " << y << ", " << z << std::endl;
+#endif
 }
 
 // LAVA main loop
@@ -691,6 +748,7 @@ int main(int argc, char *argv[])
     glutSpecialUpFunc(&gl_special_keys_up);
     glutKeyboardFunc(&gl_keyboard_keys);
     glutKeyboardUpFunc(&gl_keyboard_keys_up);
+    glutJoystickFunc(&gl_joystick, 10);
     glutIdleFunc(&gl_idle);
 
     GLenum glew_err = glewInit();
