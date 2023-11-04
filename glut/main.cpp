@@ -2,6 +2,7 @@
 #include <GL/freeglut.h>
 
 #include <glm/glm.hpp>
+#include <glm/gtc/type_ptr.hpp>
 
 #include <iostream>
 #include <fstream>
@@ -484,7 +485,9 @@ static struct {
     } texture;
     struct {
         GLint mode;
+        GLint projection;
     } uniform;
+
     LavaDisp::mode_t mode = (LavaDisp::mode_t)0;    // Invalid mode
 } gl_data;
 
@@ -574,13 +577,15 @@ static void gl_init()
     glAttachShader(program, gl_compile_shader(GL_VERTEX_SHADER, (GLchar *)R"(
 #version 330 core
 
+uniform mat4 projection;
+
 layout(location = 0) in vec2 vPosition;
 out vec2 vMap;
 
 void main()
 {
     vMap = vPosition;
-    gl_Position = vec4(vec2(1., -1.) * (vPosition * 2. - vec2(1., 1.)), 0., 1.);
+    gl_Position = projection * vec4(vPosition, 0., 1.);
 }
     )"));
 
@@ -675,10 +680,12 @@ void main()
 
     // Global uniform data
     gl_data.uniform.mode = glGetUniformLocation(program, "mode");
+    gl_data.uniform.projection = glGetUniformLocation(program, "projection");
     glUniform1ui(gl_data.uniform.mode, 256);
+    glUniformMatrix4fv(gl_data.uniform.projection, 1, GL_FALSE, glm::value_ptr(glm::mat4(1.0)));
 
     // Clear screen
-    glClearColor(0.4, 0.8, 1., 1.);
+    glClearColor(0.0, 0.0, 0.0, 1.);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 }
 
@@ -713,13 +720,35 @@ static void gl_display()
                         0, 0, lava.getFramebufferWidth(), lava.getFramebufferHeight(),
                         GL_RED, GL_UNSIGNED_BYTE, lava.getFramebuffer());
 #endif
+    glClearColor(0.0, 0.0, 0.0, 1.);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
     glutSwapBuffers();
 }
 
 static void gl_reshape(int width, int height)
 {
+    int lavaw = lava.getFramebufferWidth();
+    int lavah = lava.getFramebufferHeight();
+    int xscale = width / lavaw;
+    int yscale = height / lavah;
+    int scale = std::min(xscale, yscale);
+    // Scaled width & height pixels
+    int w = lavaw * scale;
+    int h = lavah * scale;
+    // Screen size in content space
+    double dw = double(width) / double(w);
+    double dh = double(height) / double(h);
+    // x and y pixel offsets
+    int idx = (width - w) / 2;
+    int idy = (height - h) / 2;
+    // Offsets in content space
+    double dx = dw * double(idx) / double(width);
+    double dy = dh * double(idy) / double(height);
+
     glViewport(0, 0, width, height);
+    glm::mat4 projection = glm::ortho(-dx, dw - dx, dh - dy, -dy);
+    glUniformMatrix4fv(gl_data.uniform.projection, 1, GL_FALSE, glm::value_ptr(projection));
 }
 
 int main(int argc, char *argv[])
