@@ -19,7 +19,12 @@
 
 #include "lava.h"
 
-#define RESET_KEY_F5 1
+// Debug features
+
+// Press F8 key to reset
+#define RESET_KEY_F8        1
+// Shorter delay for debugging
+#define DEBUG_SHORT_DELAY   0
 
 // Lava stuff
 
@@ -44,6 +49,7 @@ public:
     virtual int32_t getchar();
     virtual int32_t check_key(uint8_t key);
     virtual int32_t in_key();
+    virtual void release_key(uint8_t key);
 
     virtual void refresh(uint8_t *framebuffer);
 
@@ -141,7 +147,7 @@ static void lava_reset()
     lava_state.run = true;
 }
 
-static void lava_dump()
+void lava_dump()
 {
     // Dump RAM content
     auto const &ram = lava.inspectRam();
@@ -152,7 +158,7 @@ static void lava_dump()
     std::cerr << "RAM dump: ram.bin" << std::endl;
 
     // Force a framebuffer swap then dump
-    lava.framebufferSwap();
+    //lava.framebufferSwap();
     auto fb = lava.getFramebuffer();
     std::ofstream f_fb_dump;
     f_fb_dump.open("fb.bin", std::ios::binary | std::ios::out);
@@ -174,8 +180,7 @@ int32_t Callback::delay_ms(uint32_t delay)
     }
 
     int delta = glutGet(GLUT_ELAPSED_TIME) - tick;
-#if 0
-    // Shorter delay for debugging
+#if DEBUG_SHORT_DELAY
     if (delta * 10 < delay)
         return -1;
 #else
@@ -302,7 +307,7 @@ static void gl_keyboard_keys_up(uint8_t key, int x, int y)
 
 static void gl_special_keys(int key, int x, int y)
 {
-#if RESET_KEY_F5
+#if RESET_KEY_F8
     if (key == GLUT_KEY_F8) {
         lava_reset();
         return;
@@ -336,7 +341,7 @@ static uint8_t keycode_conv(int key)
 int32_t Callback::getchar()
 {
     if (lava_state.key_seq.empty())
-        return -1;
+        return -1;  // -1 tells LAVA processor to stall waiting
     int v = lava_state.key_seq.front();
     lava_state.key_seq.pop();
     return keycode_conv(v);
@@ -364,6 +369,18 @@ int32_t Callback::in_key()
     if (v < 0)
         return 0;
     return v;
+}
+
+void Callback::release_key(uint8_t key)
+{
+    // If the specified key is currently pressed, generate a new key event
+    for (auto const &k: lava_state.key_state) {
+        uint32_t kcode = keycode_conv(k);
+        if (kcode == key) {
+            lava_state.key_seq.push(k);
+            return;
+        }
+    }
 }
 
 // LAVA main loop

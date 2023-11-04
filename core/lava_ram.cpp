@@ -23,22 +23,10 @@ void LavaRam::init(uint32_t rambits)
 
 uint32_t LavaRam::pushString(const std::vector<uint8_t> &dstr)
 {
-    std::string str = to_string(dstr);
-
-    // Avoid duplicated strings
-    auto it = str_map.find(str);
-    if (it != str_map.end())
-        return it->second;
-
-    // Save to string stack
-    uint32_t a = stack_string;
-    std::copy(dstr.begin(), dstr.end(), ram.begin() + a);
+    uint32_t str = stack_string;
+    std::copy(dstr.begin(), dstr.end(), ram.begin() + stack_string);
     stack_string += dstr.size();
-
-    if (stack_string - LAVA_STRING_OFFSET >= LAVA_STRING_LIMIT)
-        throw std::runtime_error("Error: String stack overflow");
-
-    // Save to string map
-    str_map[str] = a;
-    return a;
+    if (stack_string >= LAVA_STRING_OFFSET + LAVA_STRING_LIMIT)
+        stack_string = LAVA_STRING_OFFSET;
+    return str;
 }

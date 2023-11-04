@@ -289,6 +289,46 @@ void LavaProc::lava_wrap_pushlg_char(const std::vector<uint8_t> &data)
     DEBUG_WRAP_PRINT(" -> " << ret << std::endl);
 }
 
+void LavaProc::lava_wrap_pushlg_int(const std::vector<uint8_t> &data)
+{
+    DEBUG_WRAP_PRINT("pushlg_int(");
+    uint32_t dp0;
+    if (rambits <= 16) {
+        dp0 = (uint32_t)(data[0] | (data[1] << 8));
+    } else {
+        dp0 = (uint32_t)(data[0] | (data[1] << 8) | (data[2] << 16));
+    }
+    DEBUG_WRAP_PRINT(dp0);
+    uint32_t ds0 = ram.pop();
+    DEBUG_WRAP_PRINT(", ");
+    DEBUG_WRAP_PRINT(ds0);
+    DEBUG_WRAP_PRINT(")");
+    pc += 1 + data.size();
+    uint32_t ret = lava_op_pushlg_int(dp0, ds0);
+    ram.push(ret);
+    DEBUG_WRAP_PRINT(" -> " << ret << std::endl);
+}
+
+void LavaProc::lava_wrap_pushlg_long(const std::vector<uint8_t> &data)
+{
+    DEBUG_WRAP_PRINT("pushlg_long(");
+    uint32_t dp0;
+    if (rambits <= 16) {
+        dp0 = (uint32_t)(data[0] | (data[1] << 8));
+    } else {
+        dp0 = (uint32_t)(data[0] | (data[1] << 8) | (data[2] << 16));
+    }
+    DEBUG_WRAP_PRINT(dp0);
+    uint32_t ds0 = ram.pop();
+    DEBUG_WRAP_PRINT(", ");
+    DEBUG_WRAP_PRINT(ds0);
+    DEBUG_WRAP_PRINT(")");
+    pc += 1 + data.size();
+    uint32_t ret = lava_op_pushlg_long(dp0, ds0);
+    ram.push(ret);
+    DEBUG_WRAP_PRINT(" -> " << ret << std::endl);
+}
+
 void LavaProc::lava_wrap_pushla_u8(const std::vector<uint8_t> &data)
 {
     DEBUG_WRAP_PRINT("pushla_u8(");
@@ -342,6 +382,18 @@ void LavaProc::lava_wrap_pushl_i32(const std::vector<uint8_t> &data)
     DEBUG_WRAP_PRINT(")");
     pc += 1 + data.size();
     uint32_t ret = lava_op_pushl_i32(dp0);
+    ram.push(ret);
+    DEBUG_WRAP_PRINT(" -> " << ret << std::endl);
+}
+
+void LavaProc::lava_wrap_neg(const std::vector<uint8_t> &data)
+{
+    DEBUG_WRAP_PRINT("neg(");
+    uint32_t ds0 = ram.pop();
+    DEBUG_WRAP_PRINT(ds0);
+    DEBUG_WRAP_PRINT(")");
+    pc += 1 + data.size();
+    uint32_t ret = lava_op_neg(ds0);
     ram.push(ret);
     DEBUG_WRAP_PRINT(" -> " << ret << std::endl);
 }
@@ -499,6 +551,18 @@ void LavaProc::lava_wrap_lor(const std::vector<uint8_t> &data)
     DEBUG_WRAP_PRINT(" -> " << ret << std::endl);
 }
 
+void LavaProc::lava_wrap_lnot(const std::vector<uint8_t> &data)
+{
+    DEBUG_WRAP_PRINT("lnot(");
+    uint32_t ds0 = ram.pop();
+    DEBUG_WRAP_PRINT(ds0);
+    DEBUG_WRAP_PRINT(")");
+    pc += 1 + data.size();
+    uint32_t ret = lava_op_lnot(ds0);
+    ram.push(ret);
+    DEBUG_WRAP_PRINT(" -> " << ret << std::endl);
+}
+
 void LavaProc::lava_wrap_mul(const std::vector<uint8_t> &data)
 {
     DEBUG_WRAP_PRINT("mul(");
@@ -540,6 +604,36 @@ void LavaProc::lava_wrap_mod(const std::vector<uint8_t> &data)
     DEBUG_WRAP_PRINT(")");
     pc += 1 + data.size();
     uint32_t ret = lava_op_mod(ds0, ds1);
+    ram.push(ret);
+    DEBUG_WRAP_PRINT(" -> " << ret << std::endl);
+}
+
+void LavaProc::lava_wrap_lshift(const std::vector<uint8_t> &data)
+{
+    DEBUG_WRAP_PRINT("lshift(");
+    uint32_t ds0 = ram.pop();
+    DEBUG_WRAP_PRINT(ds0);
+    uint32_t ds1 = ram.pop();
+    DEBUG_WRAP_PRINT(", ");
+    DEBUG_WRAP_PRINT(ds1);
+    DEBUG_WRAP_PRINT(")");
+    pc += 1 + data.size();
+    uint32_t ret = lava_op_lshift(ds0, ds1);
+    ram.push(ret);
+    DEBUG_WRAP_PRINT(" -> " << ret << std::endl);
+}
+
+void LavaProc::lava_wrap_rshift(const std::vector<uint8_t> &data)
+{
+    DEBUG_WRAP_PRINT("rshift(");
+    uint32_t ds0 = ram.pop();
+    DEBUG_WRAP_PRINT(ds0);
+    uint32_t ds1 = ram.pop();
+    DEBUG_WRAP_PRINT(", ");
+    DEBUG_WRAP_PRINT(ds1);
+    DEBUG_WRAP_PRINT(")");
+    pc += 1 + data.size();
+    uint32_t ret = lava_op_rshift(ds0, ds1);
     ram.push(ret);
     DEBUG_WRAP_PRINT(" -> " << ret << std::endl);
 }
@@ -657,6 +751,18 @@ void LavaProc::lava_wrap_ptr(const std::vector<uint8_t> &data)
     DEBUG_WRAP_PRINT(")");
     pc += 1 + data.size();
     uint32_t ret = lava_op_ptr(ds0);
+    ram.push(ret);
+    DEBUG_WRAP_PRINT(" -> " << ret << std::endl);
+}
+
+void LavaProc::lava_wrap_cptr(const std::vector<uint8_t> &data)
+{
+    DEBUG_WRAP_PRINT("cptr(");
+    uint32_t ds0 = ram.pop();
+    DEBUG_WRAP_PRINT(ds0);
+    DEBUG_WRAP_PRINT(")");
+    pc += 1 + data.size();
+    uint32_t ret = lava_op_cptr(ds0);
     ram.push(ret);
     DEBUG_WRAP_PRINT(" -> " << ret << std::endl);
 }
@@ -1287,6 +1393,32 @@ void LavaProc::lava_wrap_circle(const std::vector<uint8_t> &data)
     lava_op_circle(ds0, ds1, ds2, ds3, ds4);
 }
 
+void LavaProc::lava_wrap_isalpha(const std::vector<uint8_t> &data)
+{
+    DEBUG_WRAP_PRINT("isalpha(");
+    uint32_t ds0 = ram.pop();
+    DEBUG_WRAP_PRINT(ds0);
+    DEBUG_WRAP_PRINT(")");
+    pc += 1 + data.size();
+    uint32_t ret = lava_op_isalpha(ds0);
+    ram.push(ret);
+    DEBUG_WRAP_PRINT(" -> " << ret << std::endl);
+}
+
+void LavaProc::lava_wrap_strcat(const std::vector<uint8_t> &data)
+{
+    DEBUG_WRAP_PRINT("strcat(");
+    uint32_t ds0 = ram.pop();
+    DEBUG_WRAP_PRINT(ds0);
+    uint32_t ds1 = ram.pop();
+    DEBUG_WRAP_PRINT(", ");
+    DEBUG_WRAP_PRINT(ds1);
+    DEBUG_WRAP_PRINT(")");
+    DEBUG_WRAP_PRINT(std::endl);
+    pc += 1 + data.size();
+    lava_op_strcat(ds0, ds1);
+}
+
 void LavaProc::lava_wrap_strchr(const std::vector<uint8_t> &data)
 {
     DEBUG_WRAP_PRINT("strchr(");
@@ -1474,6 +1606,18 @@ void LavaProc::lava_wrap_sprintf(const std::vector<uint8_t> &data)
     lava_op_sprintf(ds0);
 }
 
+void LavaProc::lava_wrap_deletefile(const std::vector<uint8_t> &data)
+{
+    DEBUG_WRAP_PRINT("deletefile(");
+    uint32_t ds0 = ram.pop();
+    DEBUG_WRAP_PRINT(ds0);
+    DEBUG_WRAP_PRINT(")");
+    pc += 1 + data.size();
+    uint32_t ret = lava_op_deletefile(ds0);
+    ram.push(ret);
+    DEBUG_WRAP_PRINT(" -> " << ret << std::endl);
+}
+
 void LavaProc::lava_wrap_gettick(const std::vector<uint8_t> &data)
 {
     DEBUG_WRAP_PRINT("gettick(");
@@ -1494,6 +1638,60 @@ void LavaProc::lava_wrap_checkkey(const std::vector<uint8_t> &data)
     uint32_t ret = lava_op_checkkey(ds0);
     ram.push(ret);
     DEBUG_WRAP_PRINT(" -> " << ret << std::endl);
+}
+
+void LavaProc::lava_wrap_crc16(const std::vector<uint8_t> &data)
+{
+    DEBUG_WRAP_PRINT("crc16(");
+    uint32_t ds0 = ram.pop();
+    DEBUG_WRAP_PRINT(ds0);
+    uint32_t ds1 = ram.pop();
+    DEBUG_WRAP_PRINT(", ");
+    DEBUG_WRAP_PRINT(ds1);
+    DEBUG_WRAP_PRINT(")");
+    pc += 1 + data.size();
+    uint32_t ret = lava_op_crc16(ds0, ds1);
+    ram.push(ret);
+    DEBUG_WRAP_PRINT(" -> " << ret << std::endl);
+}
+
+void LavaProc::lava_wrap_encrypt(const std::vector<uint8_t> &data)
+{
+    DEBUG_WRAP_PRINT("encrypt(");
+    uint32_t ds0 = ram.pop();
+    DEBUG_WRAP_PRINT(ds0);
+    uint32_t ds1 = ram.pop();
+    DEBUG_WRAP_PRINT(", ");
+    DEBUG_WRAP_PRINT(ds1);
+    uint32_t ds2 = ram.pop();
+    DEBUG_WRAP_PRINT(", ");
+    DEBUG_WRAP_PRINT(ds2);
+    DEBUG_WRAP_PRINT(")");
+    DEBUG_WRAP_PRINT(std::endl);
+    pc += 1 + data.size();
+    lava_op_encrypt(ds0, ds1, ds2);
+}
+
+void LavaProc::lava_wrap_gettime(const std::vector<uint8_t> &data)
+{
+    DEBUG_WRAP_PRINT("gettime(");
+    uint32_t ds0 = ram.pop();
+    DEBUG_WRAP_PRINT(ds0);
+    DEBUG_WRAP_PRINT(")");
+    DEBUG_WRAP_PRINT(std::endl);
+    pc += 1 + data.size();
+    lava_op_gettime(ds0);
+}
+
+void LavaProc::lava_wrap_xdraw(const std::vector<uint8_t> &data)
+{
+    DEBUG_WRAP_PRINT("xdraw(");
+    uint32_t ds0 = ram.pop();
+    DEBUG_WRAP_PRINT(ds0);
+    DEBUG_WRAP_PRINT(")");
+    DEBUG_WRAP_PRINT(std::endl);
+    pc += 1 + data.size();
+    lava_op_xdraw(ds0);
 }
 
 void LavaProc::lava_wrap_releasekey(const std::vector<uint8_t> &data)
@@ -1585,10 +1783,13 @@ std::unordered_map<uint8_t, LavaProc::op_info_t> LavaProc::op_info = {
     {0x0f, op_info_t{"pushlv_i16", (op_len_t)(OpParam0 | OpParamAddr), &LavaProc::lava_wrap_pushlv_i16}},
     {0x10, op_info_t{"pushlv_i32", (op_len_t)(OpParam0 | OpParamAddr), &LavaProc::lava_wrap_pushlv_i32}},
     {0x11, op_info_t{"pushlg_char", (op_len_t)(OpParam0 | OpParamAddr), &LavaProc::lava_wrap_pushlg_char}},
+    {0x12, op_info_t{"pushlg_int", (op_len_t)(OpParam0 | OpParamAddr), &LavaProc::lava_wrap_pushlg_int}},
+    {0x13, op_info_t{"pushlg_long", (op_len_t)(OpParam0 | OpParamAddr), &LavaProc::lava_wrap_pushlg_long}},
     {0x14, op_info_t{"pushla_u8", (op_len_t)(OpParam0 | OpParamAddr), &LavaProc::lava_wrap_pushla_u8}},
     {0x16, op_info_t{"pushla_i32", (op_len_t)(OpParam0 | OpParamAddr), &LavaProc::lava_wrap_pushla_i32}},
     {0x17, op_info_t{"pusha_i32", (op_len_t)(OpParam0 | OpParamAddr), &LavaProc::lava_wrap_pusha_i32}},
     {0x19, op_info_t{"pushl_i32", (op_len_t)(OpParam0 | OpParamAddr), &LavaProc::lava_wrap_pushl_i32}},
+    {0x1c, op_info_t{"neg", OpParam0, &LavaProc::lava_wrap_neg}},
     {0x1d, op_info_t{"pre_inc", OpParam0, &LavaProc::lava_wrap_pre_inc}},
     {0x1e, op_info_t{"pre_dec", OpParam0, &LavaProc::lava_wrap_pre_dec}},
     {0x1f, op_info_t{"post_inc", OpParam0, &LavaProc::lava_wrap_post_inc}},
@@ -1600,9 +1801,12 @@ std::unordered_map<uint8_t, LavaProc::op_info_t> LavaProc::op_info = {
     {0x26, op_info_t{"xor", OpParam0, &LavaProc::lava_wrap_xor}},
     {0x27, op_info_t{"land", OpParam0, &LavaProc::lava_wrap_land}},
     {0x28, op_info_t{"lor", OpParam0, &LavaProc::lava_wrap_lor}},
+    {0x29, op_info_t{"lnot", OpParam0, &LavaProc::lava_wrap_lnot}},
     {0x2a, op_info_t{"mul", OpParam0, &LavaProc::lava_wrap_mul}},
     {0x2b, op_info_t{"div", OpParam0, &LavaProc::lava_wrap_div}},
     {0x2c, op_info_t{"mod", OpParam0, &LavaProc::lava_wrap_mod}},
+    {0x2d, op_info_t{"lshift", OpParam0, &LavaProc::lava_wrap_lshift}},
+    {0x2e, op_info_t{"rshift", OpParam0, &LavaProc::lava_wrap_rshift}},
     {0x2f, op_info_t{"equ", OpParam0, &LavaProc::lava_wrap_equ}},
     {0x30, op_info_t{"neq", OpParam0, &LavaProc::lava_wrap_neq}},
     {0x31, op_info_t{"le", OpParam0, &LavaProc::lava_wrap_le}},
@@ -1611,6 +1815,7 @@ std::unordered_map<uint8_t, LavaProc::op_info_t> LavaProc::op_info = {
     {0x34, op_info_t{"less", OpParam0, &LavaProc::lava_wrap_less}},
     {0x35, op_info_t{"let", OpParam0, &LavaProc::lava_wrap_let}},
     {0x36, op_info_t{"ptr", OpParam0, &LavaProc::lava_wrap_ptr}},
+    {0x37, op_info_t{"cptr", OpParam0, &LavaProc::lava_wrap_cptr}},
     {0x38, op_info_t{"pop", OpParam0, &LavaProc::lava_wrap_pop}},
     {0x39, op_info_t{"jmpe", OpParam3, &LavaProc::lava_wrap_jmpe}},
     {0x3a, op_info_t{"jmpn", OpParam3, &LavaProc::lava_wrap_jmpn}},
@@ -1654,6 +1859,8 @@ std::unordered_map<uint8_t, LavaProc::op_info_t> LavaProc::op_info = {
     {0x94, op_info_t{"point", OpParam0, &LavaProc::lava_wrap_point}},
     {0x96, op_info_t{"line", OpParam0, &LavaProc::lava_wrap_line}},
     {0x98, op_info_t{"circle", OpParam0, &LavaProc::lava_wrap_circle}},
+    {0x9c, op_info_t{"isalpha", OpParam0, &LavaProc::lava_wrap_isalpha}},
+    {0xa6, op_info_t{"strcat", OpParam0, &LavaProc::lava_wrap_strcat}},
     {0xa7, op_info_t{"strchr", OpParam0, &LavaProc::lava_wrap_strchr}},
     {0xa8, op_info_t{"strcmp", OpParam0, &LavaProc::lava_wrap_strcmp}},
     {0xa9, op_info_t{"strstr", OpParam0, &LavaProc::lava_wrap_strstr}},
@@ -1666,8 +1873,13 @@ std::unordered_map<uint8_t, LavaProc::op_info_t> LavaProc::op_info = {
     {0xb2, op_info_t{"fseek", OpParam0, &LavaProc::lava_wrap_fseek}},
     {0xb5, op_info_t{"rewind", OpParam0, &LavaProc::lava_wrap_rewind}},
     {0xb8, op_info_t{"sprintf", OpParam0, &LavaProc::lava_wrap_sprintf}},
+    {0xba, op_info_t{"deletefile", OpParam0, &LavaProc::lava_wrap_deletefile}},
     {0xbb, op_info_t{"gettick", OpParam0, &LavaProc::lava_wrap_gettick}},
     {0xbc, op_info_t{"checkkey", OpParam0, &LavaProc::lava_wrap_checkkey}},
+    {0xbe, op_info_t{"crc16", OpParam0, &LavaProc::lava_wrap_crc16}},
+    {0xbf, op_info_t{"encrypt", OpParam0, &LavaProc::lava_wrap_encrypt}},
+    {0xc2, op_info_t{"gettime", OpParam0, &LavaProc::lava_wrap_gettime}},
+    {0xc5, op_info_t{"xdraw", OpParam0, &LavaProc::lava_wrap_xdraw}},
     {0xc6, op_info_t{"releasekey", OpParam0, &LavaProc::lava_wrap_releasekey}},
     {0xc7, op_info_t{"getblock", OpParam0, &LavaProc::lava_wrap_getblock}},
     {0xcb, op_info_t{"setgraphmode", OpParam0, &LavaProc::lava_wrap_setgraphmode}},

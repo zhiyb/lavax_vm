@@ -29,6 +29,7 @@ public:
     }
 
     void clearScreen();
+    void clearActive();
 
     // Draw solid rectangle block
     void drawBlock(uint16_t x0, uint16_t x1, uint16_t y0, uint16_t y1, uint8_t cfg);
@@ -42,9 +43,11 @@ public:
     void drawRectangle(uint16_t x0, uint16_t x1, uint16_t y0, uint16_t y1, uint8_t cfg);
     // Draw text
     void drawText(const std::vector<uint8_t> &str, uint16_t x, uint16_t y, uint8_t cfg);
+    // xdraw
+    void xdraw(uint8_t cmd);
 
     // Read framebuffer data
-    std::vector<uint8_t> getBlock(bool active, uint16_t x, uint16_t y, uint16_t w, uint16_t h);
+    std::vector<uint8_t> getBlock(uint16_t x, uint16_t y, uint16_t w, uint16_t h, uint8_t cfg);
 
     void setForegroundColour(uint8_t c) {fg_colour = c & colour_mask;}
     void setBackgroundColour(uint8_t c) {bg_colour = c & colour_mask;}

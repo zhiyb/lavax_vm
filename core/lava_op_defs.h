@@ -50,6 +50,12 @@ inline uint32_t lava_op_pushlv_i32(uint32_t dp0);
 void lava_wrap_pushlg_char(const std::vector<uint8_t> &data);
 inline uint32_t lava_op_pushlg_char(uint32_t dp0, uint32_t ds0);
 
+void lava_wrap_pushlg_int(const std::vector<uint8_t> &data);
+inline uint32_t lava_op_pushlg_int(uint32_t dp0, uint32_t ds0);
+
+void lava_wrap_pushlg_long(const std::vector<uint8_t> &data);
+inline uint32_t lava_op_pushlg_long(uint32_t dp0, uint32_t ds0);
+
 void lava_wrap_pushla_u8(const std::vector<uint8_t> &data);
 inline uint32_t lava_op_pushla_u8(uint32_t dp0, uint32_t ds0);
 
@@ -58,6 +64,9 @@ inline uint32_t lava_op_pushla_i32(uint32_t dp0, uint32_t ds0);
 
 void lava_wrap_pushl_i32(const std::vector<uint8_t> &data);
 inline uint32_t lava_op_pushl_i32(uint32_t dp0);
+
+void lava_wrap_neg(const std::vector<uint8_t> &data);
+inline uint32_t lava_op_neg(uint32_t ds0);
 
 void lava_wrap_pre_inc(const std::vector<uint8_t> &data);
 inline uint32_t lava_op_pre_inc(uint32_t ds0);
@@ -92,6 +101,9 @@ inline uint32_t lava_op_land(uint32_t ds0, uint32_t ds1);
 void lava_wrap_lor(const std::vector<uint8_t> &data);
 inline uint32_t lava_op_lor(uint32_t ds0, uint32_t ds1);
 
+void lava_wrap_lnot(const std::vector<uint8_t> &data);
+inline uint32_t lava_op_lnot(uint32_t ds0);
+
 void lava_wrap_mul(const std::vector<uint8_t> &data);
 inline uint32_t lava_op_mul(uint32_t ds0, uint32_t ds1);
 
@@ -100,6 +112,12 @@ inline uint32_t lava_op_div(uint32_t ds0, uint32_t ds1);
 
 void lava_wrap_mod(const std::vector<uint8_t> &data);
 inline uint32_t lava_op_mod(uint32_t ds0, uint32_t ds1);
+
+void lava_wrap_lshift(const std::vector<uint8_t> &data);
+inline uint32_t lava_op_lshift(uint32_t ds0, uint32_t ds1);
+
+void lava_wrap_rshift(const std::vector<uint8_t> &data);
+inline uint32_t lava_op_rshift(uint32_t ds0, uint32_t ds1);
 
 void lava_wrap_equ(const std::vector<uint8_t> &data);
 inline uint32_t lava_op_equ(uint32_t ds0, uint32_t ds1);
@@ -124,6 +142,9 @@ inline uint32_t lava_op_let(uint32_t ds0, uint32_t ds1);
 
 void lava_wrap_ptr(const std::vector<uint8_t> &data);
 inline uint32_t lava_op_ptr(uint32_t ds0);
+
+void lava_wrap_cptr(const std::vector<uint8_t> &data);
+inline uint32_t lava_op_cptr(uint32_t ds0);
 
 void lava_wrap_pop(const std::vector<uint8_t> &data);
 inline void lava_op_pop(uint32_t ds0);
@@ -254,6 +275,12 @@ inline void lava_op_line(uint32_t ds0, uint32_t ds1, uint32_t ds2, uint32_t ds3,
 void lava_wrap_circle(const std::vector<uint8_t> &data);
 inline void lava_op_circle(uint32_t ds0, uint32_t ds1, uint32_t ds2, uint32_t ds3, uint32_t ds4);
 
+void lava_wrap_isalpha(const std::vector<uint8_t> &data);
+inline uint32_t lava_op_isalpha(uint32_t ds0);
+
+void lava_wrap_strcat(const std::vector<uint8_t> &data);
+inline void lava_op_strcat(uint32_t ds0, uint32_t ds1);
+
 void lava_wrap_strchr(const std::vector<uint8_t> &data);
 inline uint32_t lava_op_strchr(uint32_t ds0, uint32_t ds1);
 
@@ -290,11 +317,26 @@ inline void lava_op_rewind(uint32_t ds0);
 void lava_wrap_sprintf(const std::vector<uint8_t> &data);
 inline void lava_op_sprintf(uint32_t ds0);
 
+void lava_wrap_deletefile(const std::vector<uint8_t> &data);
+inline uint32_t lava_op_deletefile(uint32_t ds0);
+
 void lava_wrap_gettick(const std::vector<uint8_t> &data);
 inline uint32_t lava_op_gettick();
 
 void lava_wrap_checkkey(const std::vector<uint8_t> &data);
 inline uint32_t lava_op_checkkey(uint32_t ds0);
+
+void lava_wrap_crc16(const std::vector<uint8_t> &data);
+inline uint32_t lava_op_crc16(uint32_t ds0, uint32_t ds1);
+
+void lava_wrap_encrypt(const std::vector<uint8_t> &data);
+inline void lava_op_encrypt(uint32_t ds0, uint32_t ds1, uint32_t ds2);
+
+void lava_wrap_gettime(const std::vector<uint8_t> &data);
+inline void lava_op_gettime(uint32_t ds0);
+
+void lava_wrap_xdraw(const std::vector<uint8_t> &data);
+inline void lava_op_xdraw(uint32_t ds0);
 
 void lava_wrap_releasekey(const std::vector<uint8_t> &data);
 inline void lava_op_releasekey(uint32_t ds0);

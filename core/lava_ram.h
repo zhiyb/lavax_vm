@@ -144,7 +144,7 @@ public:
         if (type == 1)
             return readU8(a);
         else if (type == 2)
-            return readI16(a);
+            return (int32_t)readI16(a);
         else
             return readI32(a);
     }

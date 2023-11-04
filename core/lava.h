@@ -21,6 +21,7 @@ public:
 
     virtual int32_t check_key(uint8_t key) = 0;
     virtual int32_t in_key() = 0;
+    virtual void release_key(uint8_t key) = 0;
 
     virtual void refresh(uint8_t *framebuffer) = 0;
 
