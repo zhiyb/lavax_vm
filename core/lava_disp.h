@@ -32,17 +32,14 @@ public:
     void clearActive();
 
     // Draw solid rectangle block
-    void drawBlock(uint16_t x0, uint16_t x1, uint16_t y0, uint16_t y1, uint8_t cfg);
+    void drawBlock(int16_t x0, int16_t x1, int16_t y0, int16_t y1, uint8_t cfg);
     // Draw block
-    void drawBlock(uint16_t x, uint16_t y, uint16_t w, uint16_t h, uint8_t cfg,
+    void drawBlock(int16_t x, int16_t y, uint16_t w, uint16_t h, uint8_t cfg,
                    const std::vector<uint8_t> &data);
-    // Draw block, with 1 bbp source data
-    void drawBlockMono(uint16_t x, uint16_t y, uint16_t w, uint16_t h, uint8_t cfg,
-                       const std::vector<uint8_t> &data);
     // Draw rectangle
     void drawRectangle(uint16_t x0, uint16_t x1, uint16_t y0, uint16_t y1, uint8_t cfg);
     // Draw text
-    void drawText(const std::vector<uint8_t> &str, uint16_t x, uint16_t y, uint8_t cfg);
+    void drawText(const std::vector<uint8_t> &str, int16_t x, int16_t y, uint8_t cfg);
     // xdraw
     void xdraw(uint8_t cmd);
 
@@ -65,14 +62,19 @@ public:
 
 private:
     // Draw a horizontal line
-    void drawHLine(uint16_t x, uint16_t y, uint16_t w, uint8_t cfg);
+    void drawHLine(int16_t x, int16_t y, uint16_t w, uint8_t cfg);
     // Draw a vertical line
-    void drawVLine(uint16_t x, uint16_t y, uint16_t h, uint8_t cfg);
+    void drawVLine(int16_t x, int16_t y, uint16_t h, uint8_t cfg);
     // Draw a character
-    void drawCharacter(uint16_t c, uint16_t x, uint16_t y, uint8_t cfg);
+    void drawCharacter(uint16_t c, int16_t x, int16_t y, uint8_t cfg);
+    // Draw block, with 1 bbp source data
+    void drawBlockMono(int16_t x, int16_t y, uint16_t w, uint16_t h, uint8_t cfg,
+                       const std::vector<uint8_t> &data);
 
     void framebufferFill(uint8_t c);
     void framebufferClear();
+
+    bool in_range(int32_t x, int32_t y) {return x >= 0 && y >= 0 && x < width && y < height;}
 
     std::vector<uint8_t> lvm_data;
 

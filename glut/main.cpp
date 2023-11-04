@@ -41,15 +41,15 @@ static struct {
 class Callback: public LavaCallback
 {
 public:
-    virtual int32_t delay_ms(uint32_t delay);
-    virtual int32_t get_ms();
+    virtual int32_t delayMs(uint32_t delay);
+    virtual int32_t getMs();
 
     virtual void exit(uint32_t code);
 
     virtual int32_t getchar();
-    virtual int32_t check_key(uint8_t key);
-    virtual int32_t in_key();
-    virtual void release_key(uint8_t key);
+    virtual int32_t checkKey(uint8_t key);
+    virtual int32_t inKey();
+    virtual void releaseKey(uint8_t key);
 
     virtual void refresh(uint8_t *framebuffer);
 
@@ -58,6 +58,9 @@ public:
     virtual std::vector<uint8_t> fread(uint8_t fd, uint32_t size);
     virtual int32_t fwrite(uint8_t fd, const std::vector<uint8_t> &data);
     virtual int32_t fseek(uint8_t fd, int32_t ofs, fseek_mode_t mode);
+    virtual int32_t remove(std::string path);
+
+    virtual time_t getTime();
 
 private:
     bool delay_pending = false;
@@ -171,7 +174,7 @@ void lava_dump()
 
 // LAVA miscellaneous
 
-int32_t Callback::delay_ms(uint32_t delay)
+int32_t Callback::delayMs(uint32_t delay)
 {
     if (!delay_pending) {
         tick = glutGet(GLUT_ELAPSED_TIME);
@@ -192,9 +195,15 @@ int32_t Callback::delay_ms(uint32_t delay)
     return 0;
 }
 
-int32_t Callback::get_ms()
+int32_t Callback::getMs()
 {
     return glutGet(GLUT_ELAPSED_TIME);
+}
+
+LavaCallback::time_t Callback::getTime()
+{
+    std::cerr << __func__ << std::endl;
+    return time_t();
 }
 
 void Callback::exit(uint32_t code)
@@ -290,6 +299,13 @@ int32_t Callback::fseek(uint8_t fd, int32_t ofs, fseek_mode_t mode)
     return fstream.seekg(ofs, way) ? 0 : -1;
 }
 
+int32_t Callback::remove(std::string path)
+{
+    std::cerr << __func__ << ": " << path << std::endl;
+    // Return 0 for failure
+    return 1;
+}
+
 // LAVA keyboard process
 
 static void gl_keyboard_keys(uint8_t key, int x, int y)
@@ -347,7 +363,7 @@ int32_t Callback::getchar()
     return keycode_conv(v);
 }
 
-int32_t Callback::check_key(uint8_t key)
+int32_t Callback::checkKey(uint8_t key)
 {
     if (key >= 0x80) {
         if (lava_state.key_state.empty())
@@ -363,7 +379,7 @@ int32_t Callback::check_key(uint8_t key)
     return Lava::False;
 }
 
-int32_t Callback::in_key()
+int32_t Callback::inKey()
 {
     int32_t v = getchar();
     if (v < 0)
@@ -371,7 +387,7 @@ int32_t Callback::in_key()
     return v;
 }
 
-void Callback::release_key(uint8_t key)
+void Callback::releaseKey(uint8_t key)
 {
     // If the specified key is currently pressed, generate a new key event
     for (auto const &k: lava_state.key_state) {

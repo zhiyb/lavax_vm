@@ -10,20 +10,19 @@
 // Callback functions to be implemented by platform
 class LavaCallback {
 public:
-    // Return -1 to wait until next lava.run()
-    virtual int32_t delay_ms(uint32_t delay) = 0;
-    virtual int32_t get_ms() = 0;
-
+    virtual void refresh(uint8_t *framebuffer) = 0;
     virtual void exit(uint32_t code) = 0;
+
+    // Keyboard operations
 
     // Return -1 to wait until next lava.run()
     virtual int32_t getchar() = 0;
 
-    virtual int32_t check_key(uint8_t key) = 0;
-    virtual int32_t in_key() = 0;
-    virtual void release_key(uint8_t key) = 0;
+    virtual int32_t checkKey(uint8_t key) = 0;
+    virtual int32_t inKey() = 0;
+    virtual void releaseKey(uint8_t key) = 0;
 
-    virtual void refresh(uint8_t *framebuffer) = 0;
+    // File operations
 
     enum fseek_mode_t {
         SeekSet = 0,
@@ -36,6 +35,24 @@ public:
     virtual std::vector<uint8_t> fread(uint8_t fd, uint32_t size) = 0;
     virtual int32_t fwrite(uint8_t fd, const std::vector<uint8_t> &data) = 0;
     virtual int32_t fseek(uint8_t fd, int32_t ofs, fseek_mode_t mode) = 0;
+    virtual int32_t remove(std::string path) = 0;
+
+    // Time operations
+
+    struct time_t {
+        uint16_t year;
+        uint8_t month;
+        uint8_t day;
+        uint8_t hour;
+        uint8_t minute;
+        uint8_t second;
+        uint8_t dayOfWeek;
+    };
+    virtual time_t getTime() = 0;
+
+    // Return -1 to wait until next lava.run()
+    virtual int32_t delayMs(uint32_t delay) = 0;
+    virtual int32_t getMs() = 0;
 };
 
 class Lava

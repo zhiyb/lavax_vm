@@ -60,9 +60,21 @@ void LavaDisp::clearActive()
         std::fill(&framebuffer[fb][y][0], &framebuffer[fb][y][width], bg_colour);
 }
 
-void LavaDisp::drawHLine(uint16_t x, uint16_t y, uint16_t w, uint8_t cfg)
+void LavaDisp::drawHLine(int16_t x, int16_t y, uint16_t w, uint8_t cfg)
 {
-    // Assert: y0 < height, x0 < width, x1 < width, x0 <= x1
+    // Boundary checking
+    if (y < 0 || y >= height)
+        return;
+    int16_t ww = w;
+    if (x < 0) {
+        ww -= -x;
+        x = 0;
+    } else if (x >= width) {
+        return;
+    }
+    ww = std::min(ww, (int16_t)(width - x));
+    if (ww <= 0)
+        return;
 
     uint8_t no_buf = cfg & 0x40;
     uint8_t cmd    = cfg & 0x03;
@@ -71,17 +83,17 @@ void LavaDisp::drawHLine(uint16_t x, uint16_t y, uint16_t w, uint8_t cfg)
     switch (cmd) {
     case 0: // Fill with background colour
         std::fill(&framebuffer[fb][y][x],
-                  &framebuffer[fb][y][x + w],
+                  &framebuffer[fb][y][x + ww],
                   bg_colour);
         break;
     case 1: // Fill with foreground colour
         std::fill(&framebuffer[fb][y][x],
-                  &framebuffer[fb][y][x + w],
+                  &framebuffer[fb][y][x + ww],
                   fg_colour);
         break;
     case 2: // Invert colours
         std::transform(&framebuffer[fb][y][x],
-                       &framebuffer[fb][y][x + w],
+                       &framebuffer[fb][y][x + ww],
                        &framebuffer[fb][y][x],
                        [=](uint8_t c) {return c ^ colour_mask;});
         break;
@@ -94,18 +106,32 @@ void LavaDisp::drawHLine(uint16_t x, uint16_t y, uint16_t w, uint8_t cfg)
         refresh = 1;
 }
 
-void LavaDisp::drawVLine(uint16_t x, uint16_t y, uint16_t h, uint8_t cfg)
+void LavaDisp::drawVLine(int16_t x, int16_t y, uint16_t h, uint8_t cfg)
 {
+    // Boundry checking
+    if (x < 0 || x >= width)
+        return;
+    int16_t hh = h;
+    if (y < 0) {
+        hh -= -y;
+        y = 0;
+    } else if (y >= height) {
+        return;
+    }
+    hh = std::min(hh, (int16_t)(height - y));
+    if (hh <= 0)
+        return;
+
     uint8_t no_buf = cfg & 0x40;
     uint8_t cmd    = cfg & 0x03;
 
     uint8_t c = cmd == 0 ? bg_colour : fg_colour;
     uint8_t fb = no_buf ? 1 - fb_active : fb_active;
     if (cmd == 2) {
-        for (int dy = 0; dy < h; dy++)
+        for (int dy = 0; dy < hh; dy++)
             framebuffer[fb][y + dy][x] ^= colour_mask;
     } else {
-        for (int dy = 0; dy < h; dy++)
+        for (int dy = 0; dy < hh; dy++)
             framebuffer[fb][y + dy][x] = c;
     }
 
@@ -113,28 +139,19 @@ void LavaDisp::drawVLine(uint16_t x, uint16_t y, uint16_t h, uint8_t cfg)
         refresh = 1;
 }
 
-void LavaDisp::drawBlock(uint16_t x0, uint16_t x1, uint16_t y0, uint16_t y1, uint8_t cfg)
+void LavaDisp::drawBlock(int16_t x0, int16_t x1, int16_t y0, int16_t y1, uint8_t cfg)
 {
-    //std::cerr << __func__ << ": (" << x0 << "," << y0 << "), (" << x1 << "," << y1 << "), " << (uint32_t)cfg << std::endl;
-
-    uint8_t cmd    = cfg & 0x03;
-
     if (y0 > y1)
         std::swap(y0, y1);
     if (x0 > x1)
         std::swap(x0, x1);
 
-    x0 = std::min(x0, (uint16_t)(width - 1));
-    x1 = std::min(x1, (uint16_t)(width - 1));
-    y0 = std::min(y0, (uint16_t)(height - 1));
-    y1 = std::min(y1, (uint16_t)(height - 1));
-
     uint16_t w = x1 - x0 + 1;
-    for (uint16_t y = y0; y <= y1; y++)
+    for (int16_t y = y0; y <= y1; y++)
         drawHLine(x0, y, w, cfg);
 }
 
-void LavaDisp::drawBlock(uint16_t x, uint16_t y, uint16_t w, uint16_t h, uint8_t cfg,
+void LavaDisp::drawBlock(int16_t x, int16_t y, uint16_t w, uint16_t h, uint8_t cfg,
                          const std::vector<uint8_t> &data)
 {
     bool no_buf = cfg & 0x40;
@@ -172,10 +189,13 @@ void LavaDisp::drawBlock(uint16_t x, uint16_t y, uint16_t w, uint16_t h, uint8_t
     uint32_t ofs = 0;
     for (uint32_t dy = 0; dy < h; dy++) {
         for (uint32_t dx = 0; dx < w; dx++) {
-            uint32_t xx = hflip ? w - 1 - dx : dx;
-            uint8_t cptn = ((data[ofs / 8] >> (8 - bits - (ofs % 8))) & mask) ^ inv;
-            uint8_t &cfb = framebuffer[fb][y + dy][x + xx];
-            cfb = func(cfb, cptn);
+            int32_t xx = x + (hflip ? w - 1 - dx : dx);
+            int32_t yy = y + dy;
+            if (in_range(xx, yy)) {
+                uint8_t cptn = ((data[ofs / 8] >> (8 - bits - (ofs % 8))) & mask) ^ inv;
+                uint8_t &cfb = framebuffer[fb][yy][xx];
+                cfb = func(cfb, cptn);
+            }
             ofs += bits;
         }
         // Align to 8-bit
@@ -186,7 +206,7 @@ void LavaDisp::drawBlock(uint16_t x, uint16_t y, uint16_t w, uint16_t h, uint8_t
         refresh = 1;
 }
 
-void LavaDisp::drawBlockMono(uint16_t x, uint16_t y, uint16_t w, uint16_t h, uint8_t cfg,
+void LavaDisp::drawBlockMono(int16_t x, int16_t y, uint16_t w, uint16_t h, uint8_t cfg,
                              const std::vector<uint8_t> &data)
 {
     bool no_buf = cfg & 0x40;
@@ -211,10 +231,13 @@ void LavaDisp::drawBlockMono(uint16_t x, uint16_t y, uint16_t w, uint16_t h, uin
     uint32_t ofs = 0;
     for (uint32_t dy = 0; dy < h; dy++) {
         for (uint32_t dx = 0; dx < w; dx++) {
-            uint8_t v = data[ofs / 8] & (0x80 >> (ofs % 8)) ? fg_colour : bg_colour;
-            v = v ^ inv;
-            uint32_t xx = hflip ? w - 1 - dx : dx;
-            framebuffer[fb][y + dy][x + xx] = v;
+            int32_t xx = x + (hflip ? w - 1 - dx : dx);
+            int32_t yy = y + dy;
+            if (in_range(xx, yy)) {
+                uint8_t v = data[ofs / 8] & (0x80 >> (ofs % 8)) ? fg_colour : bg_colour;
+                v = v ^ inv;
+                framebuffer[fb][yy][xx] = v;
+            }
             ofs += 1;
         }
         // Align to 8-bit
@@ -234,11 +257,6 @@ void LavaDisp::drawRectangle(uint16_t x0, uint16_t x1, uint16_t y0, uint16_t y1,
     if (x0 > x1)
         std::swap(x0, x1);
 
-    x0 = std::min(x0, (uint16_t)(width - 1));
-    x1 = std::min(x1, (uint16_t)(width - 1));
-    y0 = std::min(y0, (uint16_t)(height - 1));
-    y1 = std::min(y1, (uint16_t)(height - 1));
-
     uint16_t w = x1 - x0 + 1;
     uint16_t h = y1 - y0 + 1;
 
@@ -248,7 +266,7 @@ void LavaDisp::drawRectangle(uint16_t x0, uint16_t x1, uint16_t y0, uint16_t y1,
     drawVLine(x1, y0, h, cfg);
 }
 
-void LavaDisp::drawText(const std::vector<uint8_t> &str, uint16_t x, uint16_t y, uint8_t cfg)
+void LavaDisp::drawText(const std::vector<uint8_t> &str, int16_t x, int16_t y, uint8_t cfg)
 {
     // Font width
     bool large = cfg & 0x80;
@@ -258,7 +276,7 @@ void LavaDisp::drawText(const std::vector<uint8_t> &str, uint16_t x, uint16_t y,
         uint16_t c = str.at(i);
         if (c == '\0')
             break;
-        uint16_t sx = x;
+        int16_t sx = x;
         if (c >= 0x80) {
             c |= str.at(++i) << 8;
             // Chinese characters have double width
@@ -269,7 +287,7 @@ void LavaDisp::drawText(const std::vector<uint8_t> &str, uint16_t x, uint16_t y,
     }
 }
 
-void LavaDisp::drawCharacter(uint16_t c, uint16_t x, uint16_t y, uint8_t cfg)
+void LavaDisp::drawCharacter(uint16_t c, int16_t x, int16_t y, uint8_t cfg)
 {
     uint8_t c1 = c;
     uint8_t c2 = c >> 8;
@@ -383,6 +401,12 @@ std::vector<uint8_t> LavaDisp::getBlock(uint16_t x, uint16_t y, uint16_t w, uint
         x = x & 0xfff8;
         w = w & 0xfff8;
     }
+
+    // Boundary checking
+    x = std::min(x, width);
+    y = std::min(y, height);
+    w = std::min((int)w, width - x);
+    h = std::min((int)h, height - y);
 
     // Active working frame buffer
     bool no_buf = cfg & 0x40;

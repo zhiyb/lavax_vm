@@ -2,6 +2,7 @@
 #include <iostream>
 #include <iomanip>
 #include <sstream>
+#include <cstring>
 #include <queue>
 
 #include "lava.h"
@@ -607,7 +608,7 @@ void LavaProc::lava_op_setscreen(uint32_t ds0)
 
 void LavaProc::lava_op_delay(uint32_t ds0)
 {
-    cb_func.func = std::bind(&LavaCallback::delay_ms, cb, ds0);
+    cb_func.func = std::bind(&LavaCallback::delayMs, cb, ds0);
     cb_func.stack = false;
 }
 
@@ -617,11 +618,8 @@ void LavaProc::lava_op_writeblock(uint32_t ds0, uint32_t ds1, uint32_t ds2, uint
     uint8_t cfg = ds1;
     uint16_t h = ds2;
     uint16_t w = ds3;
-    uint16_t y = ds4;
-    uint16_t x = ds5;
-
-    if ((int16_t)x < 0 || (int16_t)y < 0)
-        return;
+    int16_t y = ds4;
+    int16_t x = ds5;
 
     uint32_t size = 0;
     switch (disp->getMode()) {
@@ -659,20 +657,20 @@ void LavaProc::lava_op_textout(uint32_t ds0, uint32_t ds1, uint32_t ds2, uint32_
 void LavaProc::lava_op_block(uint32_t ds0, uint32_t ds1, uint32_t ds2, uint32_t ds3, uint32_t ds4)
 {
     uint8_t cfg = ds0;
-    uint16_t y1 = ds1;
-    uint16_t x1 = ds2;
-    uint16_t y0 = ds3;
-    uint16_t x0 = ds4;
+    int16_t y1 = ds1;
+    int16_t x1 = ds2;
+    int16_t y0 = ds3;
+    int16_t x0 = ds4;
     disp->drawBlock(x0, x1, y0, y1, cfg);
 }
 
 void LavaProc::lava_op_rectangle(uint32_t ds0, uint32_t ds1, uint32_t ds2, uint32_t ds3, uint32_t ds4)
 {
     uint8_t cfg = ds0;
-    uint16_t y1 = ds1;
-    uint16_t x1 = ds2;
-    uint16_t y0 = ds3;
-    uint16_t x0 = ds4;
+    int16_t y1 = ds1;
+    int16_t x1 = ds2;
+    int16_t y0 = ds3;
+    int16_t x0 = ds4;
     disp->drawRectangle(x0, x1, y0, y1, cfg);
 }
 
@@ -721,7 +719,7 @@ void LavaProc::lava_op_locate(uint32_t ds0, uint32_t ds1)
 
 uint32_t LavaProc::lava_op_inkey()
 {
-    return cb->in_key();
+    return cb->inKey();
 }
 
 void LavaProc::lava_op_point(uint32_t ds0, uint32_t ds1, uint32_t ds2)
@@ -751,7 +749,15 @@ uint32_t LavaProc::lava_op_isalpha(uint32_t ds0)
 
 void LavaProc::lava_op_strcat(uint32_t ds0, uint32_t ds1)
 {
-    TODO();
+    uint8_t *dst = ram.data().data() + (ds1 & ram.getAddrMask());
+    uint8_t *src = ram.data().data() + (ds0 & ram.getAddrMask());
+
+    while (*dst != 0)
+        dst++;
+
+    do
+        *dst++ = *src;
+    while (*src++ != 0);
 }
 
 uint32_t LavaProc::lava_op_strchr(uint32_t ds0, uint32_t ds1)
@@ -782,8 +788,14 @@ uint32_t LavaProc::lava_op_strcmp(uint32_t ds0, uint32_t ds1)
 
 uint32_t LavaProc::lava_op_strstr(uint32_t ds0, uint32_t ds1)
 {
-    TODO();
-    return 0;
+    const char *haystack = reinterpret_cast<const char *>(ram.data().data()) + (ds1 & ram.getAddrMask());
+    const char *needle   = reinterpret_cast<const char *>(ram.data().data()) + (ds0 & ram.getAddrMask());
+
+    const char *p = strstr(haystack, needle);
+    // Note if needle appears at index 0, this cannot be distinguished
+    if (p == nullptr)
+        return 0;
+    return p - haystack;
 }
 
 void LavaProc::lava_op_strcpy(uint32_t ds0, uint32_t ds1)
@@ -867,8 +879,9 @@ void LavaProc::lava_op_rewind(uint32_t ds0)
 
 uint32_t LavaProc::lava_op_deletefile(uint32_t ds0)
 {
-    TODO();
-    return 0;
+    uint32_t str = ds0 & ram.getAddrMask();
+    std::string fpath(reinterpret_cast<const char *>(ram.data().data()) + str);
+    return cb->remove(fpath);
 }
 
 uint32_t LavaProc::lava_op_crc16(uint32_t ds0, uint32_t ds1)
@@ -977,7 +990,16 @@ void LavaProc::lava_op_encrypt(uint32_t ds0, uint32_t ds1, uint32_t ds2)
 
 void LavaProc::lava_op_gettime(uint32_t ds0)
 {
-    TODO();
+    uint8_t *p = ram.data().data() + (ds0 & ram.getAddrMask());
+    const auto &time = cb->getTime();
+    p[0] = time.year;
+    p[1] = time.year >> 8;
+    p[2] = time.month;
+    p[3] = time.day;
+    p[4] = time.hour;
+    p[5] = time.minute;
+    p[6] = time.second;
+    p[7] = time.dayOfWeek;
 }
 
 void LavaProc::lava_op_xdraw(uint32_t ds0)
@@ -987,7 +1009,7 @@ void LavaProc::lava_op_xdraw(uint32_t ds0)
 
 uint32_t LavaProc::lava_op_gettick()
 {
-    int32_t ms = cb->get_ms();
+    int32_t ms = cb->getMs();
     int32_t tick = (ms % 1000) * 256 / 1000;
     //std::cerr << __func__ << ": " << ms << ", " << tick << std::endl;
     return tick;
@@ -995,12 +1017,12 @@ uint32_t LavaProc::lava_op_gettick()
 
 uint32_t LavaProc::lava_op_checkkey(uint32_t ds0)
 {
-    return cb->check_key(ds0);
+    return cb->checkKey(ds0);
 }
 
 void LavaProc::lava_op_releasekey(uint32_t ds0)
 {
-    cb->release_key(ds0);
+    cb->releaseKey(ds0);
 }
 
 void LavaProc::lava_op_getblock(uint32_t ds0, uint32_t ds1, uint32_t ds2, uint32_t ds3, uint32_t ds4, uint32_t ds5)
