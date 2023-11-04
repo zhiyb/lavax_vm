@@ -190,6 +190,7 @@ public:
     }
     std::vector<uint8_t> readStringData(uint32_t a)
     {
+        a &= ram_mask;
         std::vector<uint8_t> str;
         uint8_t v;
         do {
@@ -200,6 +201,7 @@ public:
     }
     uint32_t strlen(uint32_t a)
     {
+        a &= ram_mask;
         uint32_t len = 0;
         for (; ram[a + len] != '\0'; len++);
         return len;

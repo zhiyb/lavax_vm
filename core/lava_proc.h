@@ -33,6 +33,9 @@ private:
         return std::string(reinterpret_cast<const char *>(data.data()), data.size() - 1);
     }
 
+    std::vector<uint8_t> lava_printf(const std::vector<uint8_t> &fmt,
+                                     const std::vector<uint32_t> &params);
+
 #include "lava_op_defs.h"
 
     // Opcode length including params
