@@ -423,9 +423,9 @@ void gl_joystick(unsigned int buttonMask, int x, int y, int z)
         keys.insert(Lava::KeyEnter);
     if (buttonMask & 0x02)
         keys.insert(Lava::KeyEsc);
-    if (buttonMask & 0x03)
-        keys.insert(Lava::KeyF4);
     if (buttonMask & 0x04)
+        keys.insert(Lava::KeyF4);
+    if (buttonMask & 0x08)
         keys.insert(Lava::KeyF4);
     if (buttonMask & 0x40)
         keys.insert(Lava::KeyF4);
@@ -639,8 +639,8 @@ void main()
         glm::vec2(1., 1.),
     };
 
-    glNamedBufferData(buffer[0], sizeof(vertex), vertex, GL_STATIC_DRAW);
     glBindBuffer(GL_ARRAY_BUFFER, buffer[0]);
+    glNamedBufferData(buffer[0], sizeof(vertex), vertex, GL_STATIC_DRAW);
 
     glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, sizeof(glm::vec2), 0);
     glEnableVertexAttribArray(0);
@@ -658,6 +658,7 @@ void main()
     // Texture: frame buffer
     glGenTextures(1, &tex);
     glActiveTexture(GL_TEXTURE0);
+    glEnable(GL_TEXTURE_2D);
     glBindTexture(GL_TEXTURE_2D, tex);
     glTextureStorage2D(tex, 1, GL_R8, lava.getFramebufferWidth(), lava.getFramebufferHeight());
     glPixelStorei(GL_UNPACK_ROW_LENGTH, lava.getFramebufferStride());
@@ -666,16 +667,19 @@ void main()
     glTextureSubImage2D(tex, 0, 0, 0,
                         lava.getFramebufferWidth(), lava.getFramebufferHeight(),
                         GL_RED, GL_UNSIGNED_BYTE, lava.getFramebuffer());
+    glUniform1i(glGetUniformLocation(program, "tex"), 0);
     gl_data.texture.fb = tex;
 
     // Texture: palette
     glGenTextures(1, &tex);
-    glActiveTexture(GL_TEXTURE0);
+    glActiveTexture(GL_TEXTURE1);
+    glEnable(GL_TEXTURE_1D);
     glBindTexture(GL_TEXTURE_1D, tex);
     glTextureStorage1D(tex, 1, GL_RGB8, 256);
     glTextureParameteri(tex, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
     glTextureSubImage1D(tex, 0, 0, 256,
                         GL_RGB, GL_UNSIGNED_BYTE, palette.c256.data());
+    glUniform1i(glGetUniformLocation(program, "palette"), 1);
     gl_data.texture.palette = tex;
 
     // Global uniform data
