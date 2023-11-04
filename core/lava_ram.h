@@ -22,10 +22,10 @@ public:
 
     uint32_t getStack() {return stack;}
     void setStack(uint32_t a) {stack = a;}
-    uint32_t getFuncStackEnd() {return stack_local;}
-    void setFuncStackEnd(uint32_t a) {stack_local = a;}
-    uint32_t getFuncStackStart() {return stack_local_bp;}
-    void setFuncStackStart(uint32_t a) {stack_local_bp = a;}
+    uint32_t getFuncStackEnd() {return stack_fp_end;}
+    void setFuncStackEnd(uint32_t a) {stack_fp_end = a;}
+    uint32_t getFuncStackStart() {return stack_fp_start;}
+    void setFuncStackStart(uint32_t a) {stack_fp_start = a;}
 
 
     void push(uint32_t v)
@@ -137,7 +137,7 @@ public:
             type = a >> 24;
 
         if (type & 0x80)
-            a += stack_local_bp;
+            a += stack_fp_start;
 
         type &= 0x7f;
         a &= ram_mask;
@@ -157,7 +157,7 @@ public:
             type = a >> 24;
 
         if (type & 0x80)
-            a += stack_local_bp;
+            a += stack_fp_start;
 
         type &= 0x7f;
         a &= ram_mask;
@@ -220,7 +220,7 @@ private:
     // Function parameter data stack
     uint32_t stack;
     // Function stack frame
-    uint32_t stack_local, stack_local_bp;
+    uint32_t stack_fp_start, stack_fp_end;
     // String literal stack
     uint32_t stack_string;
 

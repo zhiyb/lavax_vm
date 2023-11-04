@@ -236,8 +236,8 @@ inline void lava_op_delay(uint32_t ds0);
 void lava_wrap_writeblock(const std::vector<uint8_t> &data);
 inline void lava_op_writeblock(uint32_t ds0, uint32_t ds1, uint32_t ds2, uint32_t ds3, uint32_t ds4, uint32_t ds5);
 
-void lava_wrap_fbswap(const std::vector<uint8_t> &data);
-inline void lava_op_fbswap();
+void lava_wrap_fbflush(const std::vector<uint8_t> &data);
+inline void lava_op_fbflush();
 
 void lava_wrap_textout(const std::vector<uint8_t> &data);
 inline void lava_op_textout(uint32_t ds0, uint32_t ds1, uint32_t ds2, uint32_t ds3);

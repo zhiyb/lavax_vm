@@ -92,7 +92,7 @@ op = {
     0x85: ("setscreen",    PARAM_NONE,    1, 0),
     0x87: ("delay",        PARAM_NONE,    1, 0),
     0x88: ("writeblock",   PARAM_NONE,    6, 0),
-    0x89: ("fbswap",       PARAM_NONE,    0, 0),
+    0x89: ("fbflush",      PARAM_NONE,    0, 0),
     0x8a: ("textout",      PARAM_NONE,    4, 0),
     0x8b: ("block",        PARAM_NONE,    5, 0),
     0x8c: ("rectangle",    PARAM_NONE,    5, 0),

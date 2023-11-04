@@ -91,7 +91,7 @@ public:
 
     LavaDisp::mode_t getGraphicMode() {return disp.getMode();}
     uint8_t *getFramebuffer() {return disp.getFramebuffer();}
-    void framebufferSwap() {disp.framebufferSwap();}
+    uint8_t *getWorkingFramebuffer() {return disp.getWorkingFramebuffer();}
     uint16_t getFramebufferWidth() {return disp.getFramebufferWidth();}
     uint16_t getFramebufferHeight() {return disp.getFramebufferHeight();}
     uint16_t getFramebufferStride() {return disp.getFramebufferStride();}

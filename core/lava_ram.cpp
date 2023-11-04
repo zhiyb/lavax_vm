@@ -17,8 +17,8 @@ void LavaRam::init(uint32_t rambits)
 
     stack          = LAVA_STACK_OFFSET;
     stack_string   = LAVA_STRING_OFFSET;
-    stack_local    = 0;
-    stack_local_bp = 0;
+    stack_fp_end   = 0;
+    stack_fp_start = 0;
 }
 
 uint32_t LavaRam::pushString(const std::vector<uint8_t> &dstr)

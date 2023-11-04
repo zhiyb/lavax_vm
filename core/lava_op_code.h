@@ -1190,13 +1190,13 @@ void LavaProc::lava_wrap_writeblock(const std::vector<uint8_t> &data)
     lava_op_writeblock(ds0, ds1, ds2, ds3, ds4, ds5);
 }
 
-void LavaProc::lava_wrap_fbswap(const std::vector<uint8_t> &data)
+void LavaProc::lava_wrap_fbflush(const std::vector<uint8_t> &data)
 {
-    DEBUG_WRAP_PRINT("fbswap(");
+    DEBUG_WRAP_PRINT("fbflush(");
     DEBUG_WRAP_PRINT(")");
     DEBUG_WRAP_PRINT(std::endl);
     pc += 1 + data.size();
-    lava_op_fbswap();
+    lava_op_fbflush();
 }
 
 void LavaProc::lava_wrap_textout(const std::vector<uint8_t> &data)
@@ -1846,7 +1846,7 @@ std::unordered_map<uint8_t, LavaProc::op_info_t> LavaProc::op_info = {
     {0x85, op_info_t{"setscreen", OpParam0, &LavaProc::lava_wrap_setscreen}},
     {0x87, op_info_t{"delay", OpParam0, &LavaProc::lava_wrap_delay}},
     {0x88, op_info_t{"writeblock", OpParam0, &LavaProc::lava_wrap_writeblock}},
-    {0x89, op_info_t{"fbswap", OpParam0, &LavaProc::lava_wrap_fbswap}},
+    {0x89, op_info_t{"fbflush", OpParam0, &LavaProc::lava_wrap_fbflush}},
     {0x8a, op_info_t{"textout", OpParam0, &LavaProc::lava_wrap_textout}},
     {0x8b, op_info_t{"block", OpParam0, &LavaProc::lava_wrap_block}},
     {0x8c, op_info_t{"rectangle", OpParam0, &LavaProc::lava_wrap_rectangle}},

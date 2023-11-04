@@ -49,13 +49,9 @@ public:
     void setForegroundColour(uint8_t c) {fg_colour = c & colour_mask;}
     void setBackgroundColour(uint8_t c) {bg_colour = c & colour_mask;}
 
-#if LAVA_DOUBLE_BUFFER
     uint8_t *getFramebuffer() {return &framebuffer[1 - fb_active][0][0];}
-    void framebufferSwap();
-#else
-    uint8_t *getFramebuffer() {return &framebuffer[0][0][0];}
-    void framebufferSwap() {refresh = 1;}
-#endif
+    uint8_t *getWorkingFramebuffer() {return &framebuffer[fb_active][0][0];}
+    void framebufferFlush();
     uint16_t getFramebufferWidth() {return width;}
     uint16_t getFramebufferHeight() {return height;}
     uint16_t getFramebufferStride() {return LAVA_MAX_WIDTH;}
@@ -78,7 +74,7 @@ private:
 
     std::vector<uint8_t> lvm_data;
 
-    uint8_t framebuffer[LAVA_DOUBLE_BUFFER + 1][LAVA_MAX_HEIGHT][LAVA_MAX_WIDTH];
+    uint8_t framebuffer[2][LAVA_MAX_HEIGHT][LAVA_MAX_WIDTH];
     uint32_t fb_active;     // Current working buffer
     uint16_t width, height;
     mode_t graphic_mode;

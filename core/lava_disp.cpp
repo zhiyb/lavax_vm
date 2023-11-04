@@ -50,7 +50,7 @@ void LavaDisp::setMode(mode_t mode)
 void LavaDisp::clearScreen()
 {
     clearActive();
-    framebufferSwap();
+    framebufferFlush();
 }
 
 void LavaDisp::clearActive()
@@ -430,16 +430,10 @@ std::vector<uint8_t> LavaDisp::getBlock(uint16_t x, uint16_t y, uint16_t w, uint
     return data;
 }
 
-#if LAVA_DOUBLE_BUFFER
-void LavaDisp::framebufferSwap()
+void LavaDisp::framebufferFlush()
 {
-#if 1
     std::copy(&framebuffer[fb_active][0][0],
               &framebuffer[fb_active][0][0] + sizeof(framebuffer[0]),
               &framebuffer[1 - fb_active][0][0]);
-#else
-    fb_active = 1 - fb_active;
-#endif
     refresh = 1;
 }
-#endif

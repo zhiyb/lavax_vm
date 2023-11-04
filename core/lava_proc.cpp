@@ -638,9 +638,9 @@ void LavaProc::lava_op_writeblock(uint32_t ds0, uint32_t ds1, uint32_t ds2, uint
     disp->drawBlock(x, y, w, h, cfg, data);
 }
 
-void LavaProc::lava_op_fbswap()
+void LavaProc::lava_op_fbflush()
 {
-    disp->framebufferSwap();
+    disp->framebufferFlush();
 }
 
 void LavaProc::lava_op_textout(uint32_t ds0, uint32_t ds1, uint32_t ds2, uint32_t ds3)
