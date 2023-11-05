@@ -55,42 +55,36 @@ void LavaDisp::setMode(mode_t mode)
     bg_colour = 0;
 }
 
-void LavaDisp::saveState(std::vector<uint8_t> &data)
+void LavaDisp::saveState(std::ostream &ss)
 {
-    data.push_back(width  >> 0);
-    data.push_back(width  >> 8);
-    data.push_back(height >> 0);
-    data.push_back(height >> 8);
-    data.push_back(graphic_mode);
-    data.insert(data.end(), fb_disp.cbegin(), fb_disp.cend());
-    data.insert(data.end(), fb_working.cbegin(), fb_working.cend());
-    data.push_back(fg_colour);
-    data.push_back(bg_colour);
+    ss.put(width  >> 0);
+    ss.put(width  >> 8);
+    ss.put(height >> 0);
+    ss.put(height >> 8);
+    ss.put(graphic_mode);
+    ss.write(reinterpret_cast<const char *>(fb_disp.data()), fb_disp.size());
+    ss.write(reinterpret_cast<const char *>(fb_working.data()), fb_working.size());
+    ss.put(fg_colour);
+    ss.put(bg_colour);
 }
 
-uint32_t LavaDisp::restoreState(const std::vector<uint8_t> &data, uint32_t offset)
+void LavaDisp::restoreState(std::istream &ss)
 {
-    width   = data[offset + 0] << 0;
-    width  |= data[offset + 1] << 8;
-    height  = data[offset + 2] << 0;
-    height |= data[offset + 3] << 8;
+    width   = ss.get();
+    width  |= ss.get();
+    height  = ss.get();
+    height |= ss.get();
     setSize(width, height);
-    graphic_mode = (mode_t)data[offset + 4];
+    graphic_mode = (mode_t)ss.get();
     setMode(graphic_mode);
-    offset += 5;
 
-    std::copy(data.cbegin() + offset, data.cbegin() + offset + fb_disp.size(), fb_disp.begin());
-    offset += fb_disp.size();
-    std::copy(data.cbegin() + offset, data.cbegin() + offset + fb_working.size(), fb_working.begin());
-    offset += fb_working.size();
+    ss.read(reinterpret_cast<char *>(fb_disp.data()), fb_disp.size());
+    ss.read(reinterpret_cast<char *>(fb_working.data()), fb_working.size());
 
-    fg_colour = data[offset + 0];
-    bg_colour = data[offset + 1];
-    offset += 2;
+    fg_colour = ss.get();
+    bg_colour = ss.get();
 
     refresh = 1;
-
-    return offset;
 }
 
 void LavaDisp::clearScreen()

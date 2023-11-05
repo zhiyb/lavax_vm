@@ -26,8 +26,8 @@ public:
     void reset();
     void run();
 
-    void saveState(std::vector<uint8_t> &data);
-    uint32_t restoreState(const std::vector<uint8_t> &data, uint32_t offset);
+    void saveState(std::ostream &ss);
+    void restoreState(std::istream &ss);
 
 private:
     uint32_t parse(uint32_t ofs);
@@ -78,6 +78,13 @@ private:
         // Save PC and stack pointer before current instruction for save state support
         uint32_t pc, sp;
     } cb_func;
+
+    // File info for save state support
+    struct file_t {
+        std::string path;
+        std::string mode;
+    } files;
+    std::unordered_map<uint8_t, file_t> file_map;
 
     // Other systems
     LavaCallback *cb;

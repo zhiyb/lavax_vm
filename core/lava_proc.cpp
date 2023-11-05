@@ -8,7 +8,7 @@
 #include "lava.h"
 #include "lava_proc.h"
 
-#define DEBUG_PRINT 0
+#define DEBUG_PRINT 1
 
 #define TODO()      throw std::runtime_error(std::string("PROC_TODO:") + std::to_string(__LINE__) + " " + __FUNCSIG__)
 #define PROC_TODO() std::cerr << "PROC_TODO: " << __FUNCSIG__ << std::endl
@@ -120,14 +120,14 @@ void LavaProc::run()
         cb->refresh(disp->getFramebuffer());
 }
 
-void LavaProc::saveState(std::vector<uint8_t> &data)
+void LavaProc::saveState(std::ostream &ss)
 {
     auto const pushU32 = [&](uint32_t v)
     {
-        data.push_back(v >>  0);
-        data.push_back(v >>  8);
-        data.push_back(v >> 16);
-        data.push_back(v >> 24);
+        ss.put(v >>  0);
+        ss.put(v >>  8);
+        ss.put(v >> 16);
+        ss.put(v >> 24);
     };
 
     // Common configurations
@@ -151,19 +151,36 @@ void LavaProc::saveState(std::vector<uint8_t> &data)
     pushU32(flagv);
     pushU32(seed);
 
-    data.insert(data.end(), ram.data().cbegin(), ram.data().cend());
+    ss.write(reinterpret_cast<const char *>(ram.data().data()), ram.data().size());
+
+    // Save file descriptors
+    ss.put(file_map.size());
+    for (const auto &f: file_map) {
+        uint8_t fd = f.first;
+        ss.put(fd);
+        auto const &path = f.second.path;
+        pushU32(path.size());
+        ss.write(path.data(), path.size());
+        auto const &mode = f.second.mode;
+        pushU32(mode.size());
+        ss.write(mode.data(), mode.size());
+        int32_t offset = cb->ftell(fd);
+        pushU32(offset);
+        if (offset < 0)
+            std::cerr << "Failed to save file state: " << f.second.path << std::endl;
+        //std::cerr << __func__ << "(\"" << path << "\", \"" << mode << "\", " << offset << ")" << std::endl;
+    }
 }
 
-uint32_t LavaProc::restoreState(const std::vector<uint8_t> &data, uint32_t offset)
+void LavaProc::restoreState(std::istream &ss)
 {
     auto const popU32 = [&]() -> uint32_t
     {
         uint32_t v = 0;
-        v |= data[offset + 0] <<  0;
-        v |= data[offset + 1] <<  8;
-        v |= data[offset + 2] << 16;
-        v |= data[offset + 3] << 24;
-        offset += 4;
+        v |= ss.get() <<  0;
+        v |= ss.get() <<  8;
+        v |= ss.get() << 16;
+        v |= ss.get() << 24;
         return v;
     };
 
@@ -180,10 +197,24 @@ uint32_t LavaProc::restoreState(const std::vector<uint8_t> &data, uint32_t offse
     flagv = popU32();
     seed = popU32();
 
-    std::copy(data.begin() + offset, data.begin() + offset + ram.data().size(), ram.data().begin());
-    offset += ram.data().size();
+    ss.read(reinterpret_cast<char *>(ram.data().data()), ram.data().size());
 
-    return offset;
+    // Restore file descriptors
+    while (!file_map.empty())
+        lava_op_fclose(file_map.begin()->first);
+    uint8_t nfd = ss.get();
+    for (int i = 0; i < nfd; i++) {
+        uint8_t fd = ss.get();
+        std::string path(popU32(), '\0');
+        ss.read(path.data(), path.size());
+        std::string mode(popU32(), '\0');
+        ss.read(mode.data(), mode.size());
+        int32_t offset = popU32();
+        if (offset >= 0 && cb->frestore(fd, path, mode, offset))
+            file_map[fd] = {path, mode};
+        else
+            std::cerr << "Failed to restore file state: " << path << std::endl;
+    }
 }
 
 #include "lava_op_code.h"
@@ -901,12 +932,17 @@ uint32_t LavaProc::lava_op_fopen(uint32_t ds0, uint32_t ds1)
 {
     auto const &path = to_string(ram.readStringData(ds1));
     auto const &mode = to_string(ram.readStringData(ds0));
-    return cb->fopen(path, mode);
+    int fd = cb->fopen(path, mode);
+    if (fd != 0)
+        file_map[fd] = {path, mode};
+    return fd;
 }
 
 void LavaProc::lava_op_fclose(uint32_t ds0)
 {
-    cb->fclose(ds0);
+    int fd = ds0;
+    file_map.erase(fd);
+    cb->fclose(fd);
 }
 
 uint32_t LavaProc::lava_op_fread(uint32_t ds0, uint32_t ds1, uint32_t ds2, uint32_t ds3)

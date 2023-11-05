@@ -75,32 +75,26 @@ void Lava::reset()
     proc.reset();
 }
 
-std::vector<uint8_t> Lava::saveState()
+void Lava::saveState(std::ostream &ss)
 {
-    std::vector<uint8_t> data;
-
     const uint32_t version = 0;
-    data.push_back(version >>  0);
-    data.push_back(version >>  8);
-    data.push_back(version >> 16);
-    data.push_back(version >> 24);
+    ss.put(version >>  0);
+    ss.put(version >>  8);
+    ss.put(version >> 16);
+    ss.put(version >> 24);
 
-    disp.saveState(data);
-    proc.saveState(data);
-    return data;
+    disp.saveState(ss);
+    proc.saveState(ss);
 }
 
-void Lava::restoreState(const std::vector<uint8_t> &data)
+void Lava::restoreState(std::istream &ss)
 {
-    uint32_t offset = 0;
-
     uint32_t version = 0;
-    version |= data[offset + 0] <<  0;
-    version |= data[offset + 1] <<  8;
-    version |= data[offset + 2] << 16;
-    version |= data[offset + 3] << 24;
-    offset += 4;
+    version |= ss.get() <<  0;
+    version |= ss.get() <<  8;
+    version |= ss.get() << 16;
+    version |= ss.get() << 24;
 
-    offset = disp.restoreState(data, offset);
-    offset = proc.restoreState(data, offset);
+    disp.restoreState(ss);
+    proc.restoreState(ss);
 }

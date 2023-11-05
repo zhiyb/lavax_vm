@@ -6,6 +6,7 @@
 
 #include <iostream>
 #include <fstream>
+#include <sstream>
 #include <filesystem>
 #include <stdexcept>
 #include <string>
@@ -33,13 +34,13 @@
 
 static Lava lava;
 
-static struct {
+static struct lava_state_t {
     bool run = true;
     uint32_t ret_code = 0;
     std::queue<int> key_seq;
     std::unordered_set<int> key_state;
     std::unordered_map<int, std::fstream> file_map;
-    std::vector<uint8_t> save;
+    std::string save;
 } lava_state;
 
 class Callback: public LavaCallback
@@ -62,6 +63,8 @@ public:
     virtual std::vector<uint8_t> fread(uint8_t fd, uint32_t size);
     virtual int32_t fwrite(uint8_t fd, const std::vector<uint8_t> &data);
     virtual int32_t fseek(uint8_t fd, int32_t ofs, fseek_mode_t mode);
+    virtual int32_t ftell(uint8_t fd);
+    virtual bool frestore(uint8_t fd, std::string path, std::string mode, int32_t offset);
     virtual int32_t remove(std::string path);
 
     virtual time_t getTime();
@@ -153,9 +156,11 @@ void lava_dump()
 
 static void lava_save_state()
 {
-    lava_state.save = lava.saveState();
+    std::ostringstream ss;
+    lava.saveState(ss);
+    lava_state.save = ss.str();
     std::ofstream fs(SAVE_STATE_FILE, std::ios::binary | std::ios::out | std::ios::trunc);
-    fs.write(reinterpret_cast<const char *>(lava_state.save.data()), lava_state.save.size());
+    fs.write(lava_state.save.data(), lava_state.save.size());
     fs.close();
     std::cerr << "State saved: " << SAVE_STATE_FILE << std::endl;
 }
@@ -169,9 +174,10 @@ static void lava_restore_state()
             return;
         }
         lava_state.save.resize(1 * 1024 * 1024);
-        lava_state.save.resize(fs.rdbuf()->sgetn(reinterpret_cast<char *>(lava_state.save.data()), lava_state.save.size()));
+        lava_state.save.resize(fs.rdbuf()->sgetn(lava_state.save.data(), lava_state.save.size()));
     }
-    lava.restoreState(lava_state.save);
+    std::istringstream ss(lava_state.save);
+    lava.restoreState(ss);
     std::cerr << "State restored" << std::endl;
 }
 
@@ -301,6 +307,54 @@ int32_t Callback::fseek(uint8_t fd, int32_t ofs, fseek_mode_t mode)
     return fstream.seekg(ofs, way) ? 0 : -1;
 }
 
+int32_t Callback::ftell(uint8_t fd)
+{
+    auto it = lava_state.file_map.find(fd);
+    if (it == lava_state.file_map.end())
+        return -1;
+    auto &fstream = it->second;
+    return fstream.tellg();
+}
+
+bool Callback::frestore(uint8_t fd, std::string path, std::string mode, int32_t offset)
+{
+    std::filesystem::path fpath(".");
+    fpath += path;
+    //std::cerr << __func__ << "(\"" << path << "\", \"" << mode << "\", " << offset << ")" << std::endl;
+    std::ios::openmode fmode = 0;
+    // Always use binary mode to avoid issues with line return characters
+    fmode |= std::ios::binary;
+    for (auto c: mode) {
+        switch (c) {
+        case 'r':
+            fmode |= std::ios::in;
+            break;
+        case 'w':
+            // No trunc when restoring file state
+            fmode |= std::ios::out /*| std::ios::trunc*/;
+            break;
+        case '+':
+            fmode |= std::ios::in | std::ios::out;
+            break;
+        case 'b':
+            fmode |= std::ios::binary;
+            break;
+        default:
+            throw std::runtime_error("Unknown file mode: \"" + mode + "\": " + path);
+            break;
+        }
+    }
+
+    // File map should have been erased by fclose when restoring
+    // Safe to override without checking
+    auto &fstream = lava_state.file_map[fd];
+    fstream.open(fpath, fmode);
+    if (!fstream)
+        return false;
+    fstream.seekg(offset, std::ios::beg);
+    return true;
+}
+
 int32_t Callback::remove(std::string path)
 {
     std::cerr << __func__ << ": " << path << std::endl;
@@ -345,6 +399,8 @@ static uint8_t keycode_conv(int key)
     return k->second;
 }
 
+static void refresh_working_fb();
+
 void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods)
 {
     if (action == GLFW_PRESS) {
@@ -355,6 +411,10 @@ void key_callback(GLFWwindow* window, int key, int scancode, int action, int mod
             lava_save_state();
         else if (key == GLFW_KEY_F10)
             lava_restore_state();
+        else if (key == GLFW_KEY_F11)
+            refresh_working_fb();
+        else if (key == GLFW_KEY_F12)
+            lava_dump();
 
         // Lava key code conversion
         uint8_t k = keycode_conv(key);
@@ -754,6 +814,14 @@ void Callback::refresh(const uint8_t *framebuffer)
     glTextureSubImage2D(gl_data.texture.fb, 0,
                         0, 0, lava.getFramebufferWidth(), lava.getFramebufferHeight(),
                         GL_RED, GL_UNSIGNED_BYTE, lava.getFramebuffer());
+    gl_data.refresh = true;
+}
+
+static void refresh_working_fb()
+{
+    glTextureSubImage2D(gl_data.texture.fb, 0,
+                        0, 0, lava.getFramebufferWidth(), lava.getFramebufferHeight(),
+                        GL_RED, GL_UNSIGNED_BYTE, lava.getWorkingFramebuffer());
     gl_data.refresh = true;
 }
 

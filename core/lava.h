@@ -2,6 +2,7 @@
 
 #include <string>
 #include <cstdint>
+#include <iostream>
 
 #include "lava_cfg.h"
 #include "lava_disp.h"
@@ -35,6 +36,8 @@ public:
     virtual std::vector<uint8_t> fread(uint8_t fd, uint32_t size) = 0;
     virtual int32_t fwrite(uint8_t fd, const std::vector<uint8_t> &data) = 0;
     virtual int32_t fseek(uint8_t fd, int32_t ofs, fseek_mode_t mode) = 0;
+    virtual int32_t ftell(uint8_t fd) = 0;
+    virtual bool frestore(uint8_t fd, std::string path, std::string mode, int32_t offset) = 0;
     virtual int32_t remove(std::string path) = 0;
 
     // Time operations
@@ -93,8 +96,8 @@ public:
     // u8 graphic mode
     // u8[] frame buffer
     // ... other data
-    std::vector<uint8_t> saveState();
-    void restoreState(const std::vector<uint8_t> &data);
+    void saveState(std::ostream &ss);
+    void restoreState(std::istream &ss);
 
     const std::vector<uint8_t> &inspectRam() {return proc.inspectRam();}
 
