@@ -1,0 +1,8 @@
+*.dll
+*.obj
+*.exe
+*.o
+*.bin
+*.log
+*.sh
+LavaData/**
