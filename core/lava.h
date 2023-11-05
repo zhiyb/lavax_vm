@@ -23,6 +23,8 @@ public:
     virtual int32_t inKey() = 0;
     virtual void releaseKey(uint8_t key) = 0;
 
+    virtual int32_t debugContinue() = 0;
+
     // File operations
 
     enum fseek_mode_t {

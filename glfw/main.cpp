@@ -56,6 +56,9 @@ public:
     virtual int32_t inKey();
     virtual void releaseKey(uint8_t key);
 
+    void setDebug(int key) {debug = key;}
+    virtual int32_t debugContinue();
+
     virtual void refresh(const uint8_t *framebuffer);
 
     virtual uint8_t fopen(std::string path, std::string mode);
@@ -72,6 +75,7 @@ public:
 private:
     bool delay_pending = false;
     double tick = 0;
+    int debug = -1;
 };
 
 static Callback cb;
@@ -251,7 +255,7 @@ uint8_t Callback::fopen(std::string path, std::string mode)
             break;
         }
     }
-    for (int i = 1; i <= 255; i++) {
+    for (int i = 0x80; i <= 0xff; i++) {
         if (lava_state.file_map.find(i) == lava_state.file_map.end()) {
             auto &fstream = lava_state.file_map[i];
             fstream.open(fpath, fmode);
@@ -304,7 +308,14 @@ int32_t Callback::fseek(uint8_t fd, int32_t ofs, fseek_mode_t mode)
         way = std::ios::cur;
     else if (mode == SeekEnd)
         way = std::ios::end;
-    return fstream.seekg(ofs, way) ? 0 : -1;
+    // If seek failed, skip operation, and restore current offset
+    std::streampos pos = fstream.tellg();
+    if (!fstream.seekg(ofs, way)) {
+        fstream.clear();
+        fstream.seekg(pos, std::ios::beg);
+        return -1;
+    }
+    return 0;
 }
 
 int32_t Callback::ftell(uint8_t fd)
@@ -415,6 +426,8 @@ void key_callback(GLFWwindow* window, int key, int scancode, int action, int mod
             refresh_working_fb();
         else if (key == GLFW_KEY_F12)
             lava_dump();
+        else if (key == GLFW_KEY_PAGE_DOWN)
+            cb.setDebug(key);
 
         // Lava key code conversion
         uint8_t k = keycode_conv(key);
@@ -429,6 +442,13 @@ void key_callback(GLFWwindow* window, int key, int scancode, int action, int mod
             return;
         lava_state.key_state.erase(k);
     }
+}
+
+int32_t Callback::debugContinue()
+{
+    int dbg = debug;
+    debug = -1;
+    return dbg;
 }
 
 int32_t Callback::getchar()

@@ -8,7 +8,7 @@
 #include "lava.h"
 #include "lava_proc.h"
 
-#define DEBUG_PRINT 1
+#define DEBUG_PRINT 0
 
 #define TODO()      throw std::runtime_error(std::string("PROC_TODO:") + std::to_string(__LINE__) + " " + __FUNCSIG__)
 #define PROC_TODO() std::cerr << "PROC_TODO: " << __FUNCSIG__ << std::endl
@@ -83,6 +83,12 @@ void LavaProc::reset()
 
 void LavaProc::run()
 {
+    if (debug_break) {
+        if (cb->debugContinue() == -1)
+            return;
+        debug_break = false;
+    }
+
     if (cb_func.func) {
         int32_t ret = cb_func.func();
         if (ret < 0)
@@ -115,6 +121,14 @@ void LavaProc::run()
     cb_func.pc = pc;
     cb_func.sp = ram.getStack();
     op.func();
+
+#if 0
+    bool trigger = ram.readU8(0x587c) == 0x90 && ram.readU8(0x587d) == 0x0c;
+    static bool trigger_p = false;
+    if (trigger && !trigger_p)
+        debug_break = true;
+    trigger_p = trigger;
+#endif
 
     if (disp->refreshRequest())
         cb->refresh(disp->getFramebuffer());
@@ -381,12 +395,12 @@ uint32_t LavaProc::lava_op_post_dec(uint32_t ds0)
 
 uint32_t LavaProc::lava_op_add(uint32_t ds0, uint32_t ds1)
 {
-    return (uint32_t)((int32_t)ds1 + (int32_t)ds0);
+    return (int32_t)ds1 + (int32_t)ds0;
 }
 
 uint32_t LavaProc::lava_op_sub(uint32_t ds0, uint32_t ds1)
 {
-    return (uint32_t)((int32_t)ds1 - (int32_t)ds0);
+    return (int32_t)ds1 - (int32_t)ds0;
 }
 
 uint32_t LavaProc::lava_op_and(uint32_t ds0, uint32_t ds1)
@@ -625,22 +639,30 @@ uint32_t LavaProc::lava_op_qlshift(int16_t dp0, uint32_t ds0)
 {
     uint32_t v = ds0;
     int32_t shift = dp0;
+#if 0
+    return v << dp0;
+#else
     if (shift >= 0)
         v <<= shift;
     else
         v >>= -shift;
     return v;
+#endif
 }
 
 uint32_t LavaProc::lava_op_qrshift(int16_t dp0, uint32_t ds0)
 {
     uint32_t v = ds0;
     int32_t shift = dp0;
+#if 0
+    return v >> dp0;
+#else
     if (shift >= 0)
         v >>= shift;
     else
         v <<= -shift;
     return v;
+#endif
 }
 
 uint32_t LavaProc::lava_op_qequ(int16_t dp0, uint32_t ds0)
@@ -950,6 +972,11 @@ uint32_t LavaProc::lava_op_fread(uint32_t ds0, uint32_t ds1, uint32_t ds2, uint3
     uint8_t fd = ds0;
     uint32_t size = ds1 * ds2;
     uint32_t addr = ds3;
+
+#if 0
+    uint32_t offset = cb->ftell(fd);
+    std::cerr << " => " << file_map[fd].path << ", " << offset;
+#endif
 
     auto const &data = cb->fread(fd, size);
     ram.writeData(addr, data);
