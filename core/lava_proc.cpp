@@ -112,10 +112,78 @@ void LavaProc::run()
 
 #endif
 
+    cb_func.pc = pc;
+    cb_func.sp = ram.getStack();
     op.func();
 
     if (disp->refreshRequest())
         cb->refresh(disp->getFramebuffer());
+}
+
+void LavaProc::saveState(std::vector<uint8_t> &data)
+{
+    auto const pushU32 = [&](uint32_t v)
+    {
+        data.push_back(v >>  0);
+        data.push_back(v >>  8);
+        data.push_back(v >> 16);
+        data.push_back(v >> 24);
+    };
+
+    // Common configurations
+    pushU32(rambits);
+    pushU32(pen_input);
+
+    // System state
+    if (cb_func.func) {
+        // Save state before waiting for callback
+        pushU32(cb_func.pc);
+        pushU32(cb_func.sp);
+    } else {
+        // Current state is ready for save state
+        pushU32(pc);
+        pushU32(ram.getStack());
+    }
+    // Instructions requiring callback do no affect these, so should be safe
+    pushU32(ram.getFuncStackStart());
+    pushU32(ram.getFuncStackEnd());
+    pushU32(ram.getStringStack());
+    pushU32(flagv);
+    pushU32(seed);
+
+    data.insert(data.end(), ram.data().cbegin(), ram.data().cend());
+}
+
+uint32_t LavaProc::restoreState(const std::vector<uint8_t> &data, uint32_t offset)
+{
+    auto const popU32 = [&]() -> uint32_t
+    {
+        uint32_t v = 0;
+        v |= data[offset + 0] <<  0;
+        v |= data[offset + 1] <<  8;
+        v |= data[offset + 2] << 16;
+        v |= data[offset + 3] << 24;
+        offset += 4;
+        return v;
+    };
+
+    rambits = popU32();
+    pen_input = popU32();
+    ram.init(rambits);
+
+    cb_func.func = nullptr;
+    pc = popU32();
+    ram.setStack(popU32());
+    ram.setFuncStackStart(popU32());
+    ram.setFuncStackEnd(popU32());
+    ram.setStringStack(popU32());
+    flagv = popU32();
+    seed = popU32();
+
+    std::copy(data.begin() + offset, data.begin() + offset + ram.data().size(), ram.data().begin());
+    offset += ram.data().size();
+
+    return offset;
 }
 
 #include "lava_op_code.h"

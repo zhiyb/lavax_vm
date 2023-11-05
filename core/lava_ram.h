@@ -26,6 +26,8 @@ public:
     void setFuncStackEnd(uint32_t a) {stack_fp_end = a;}
     uint32_t getFuncStackStart() {return stack_fp_start;}
     void setFuncStackStart(uint32_t a) {stack_fp_start = a;}
+    uint32_t getStringStack() {return stack_string;}
+    void setStringStack(uint32_t a) {stack_string = a;}
 
 
     void push(uint32_t v)
@@ -223,7 +225,4 @@ private:
     uint32_t stack_fp_start, stack_fp_end;
     // String literal stack
     uint32_t stack_string;
-
-    // Stored pushed string constants
-    std::unordered_map<std::string, uint32_t> str_map;
 };

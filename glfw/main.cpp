@@ -20,6 +20,8 @@
 
 #include "lava.h"
 
+#define SAVE_STATE_FILE "lava.sav"
+
 // Debug features
 
 // Press F8 key to reset
@@ -37,6 +39,7 @@ static struct {
     std::queue<int> key_seq;
     std::unordered_set<int> key_state;
     std::unordered_map<int, std::fstream> file_map;
+    std::vector<uint8_t> save;
 } lava_state;
 
 class Callback: public LavaCallback
@@ -146,6 +149,30 @@ void lava_dump()
     std::cerr << "FB dump: fb.bin" << std::endl;
 
     cb.refresh(lava.getFramebuffer());
+}
+
+static void lava_save_state()
+{
+    lava_state.save = lava.saveState();
+    std::ofstream fs(SAVE_STATE_FILE, std::ios::binary | std::ios::out | std::ios::trunc);
+    fs.write(reinterpret_cast<const char *>(lava_state.save.data()), lava_state.save.size());
+    fs.close();
+    std::cerr << "State saved: " << SAVE_STATE_FILE << std::endl;
+}
+
+static void lava_restore_state()
+{
+    if (lava_state.save.empty()) {
+        std::ifstream fs(SAVE_STATE_FILE, std::ios::binary | std::ios::in);
+        if (!fs) {
+            std::cerr << "Save state file not found: " << SAVE_STATE_FILE << std::endl;
+            return;
+        }
+        lava_state.save.resize(1 * 1024 * 1024);
+        lava_state.save.resize(fs.rdbuf()->sgetn(reinterpret_cast<char *>(lava_state.save.data()), lava_state.save.size()));
+    }
+    lava.restoreState(lava_state.save);
+    std::cerr << "State restored" << std::endl;
 }
 
 // LAVA miscellaneous
@@ -321,9 +348,16 @@ static uint8_t keycode_conv(int key)
 void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods)
 {
     if (action == GLFW_PRESS) {
-        uint8_t k = keycode_conv(key);
+        // Special functions
         if (key == GLFW_KEY_DELETE)
             lava_reset();
+        else if (key == GLFW_KEY_F9)
+            lava_save_state();
+        else if (key == GLFW_KEY_F10)
+            lava_restore_state();
+
+        // Lava key code conversion
+        uint8_t k = keycode_conv(key);
         if (k == 0)
             return;
         lava_state.key_seq.push(k);

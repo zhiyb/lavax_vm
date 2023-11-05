@@ -87,6 +87,15 @@ public:
     void reset();
     void run() {proc.run();}
 
+    // Save state format:
+    // u32 version
+    // u16 width, height
+    // u8 graphic mode
+    // u8[] frame buffer
+    // ... other data
+    std::vector<uint8_t> saveState();
+    void restoreState(const std::vector<uint8_t> &data);
+
     const std::vector<uint8_t> &inspectRam() {return proc.inspectRam();}
 
     LavaDisp::mode_t getGraphicMode() {return disp.getMode();}

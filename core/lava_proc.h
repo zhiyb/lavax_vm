@@ -26,6 +26,9 @@ public:
     void reset();
     void run();
 
+    void saveState(std::vector<uint8_t> &data);
+    uint32_t restoreState(const std::vector<uint8_t> &data, uint32_t offset);
+
 private:
     uint32_t parse(uint32_t ofs);
     std::string to_string(const std::vector<uint8_t> &data)
@@ -72,6 +75,8 @@ private:
     struct {
         bool stack;
         std::function<int()> func;
+        // Save PC and stack pointer before current instruction for save state support
+        uint32_t pc, sp;
     } cb_func;
 
     // Other systems
@@ -83,6 +88,6 @@ private:
     bool pen_input;
 
     uint32_t pc;
-    uint32_t flagv;
+    uint32_t flagv;     // Flag value for conditional jumps
     int32_t seed;
 };

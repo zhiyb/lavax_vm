@@ -28,6 +28,9 @@ public:
         return v;
     }
 
+    void saveState(std::vector<uint8_t> &data);
+    uint32_t restoreState(const std::vector<uint8_t> &data, uint32_t offset);
+
     void clearScreen();
     void clearWorking();
 

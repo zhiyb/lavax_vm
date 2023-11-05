@@ -13,8 +13,6 @@ void LavaRam::init(uint32_t rambits)
         ram.resize(1ul << 24);
     std::fill(ram.begin(), ram.end(), 0);
 
-    str_map.clear();
-
     stack          = LAVA_STACK_OFFSET;
     stack_string   = LAVA_STRING_OFFSET;
     stack_fp_end   = 0;
