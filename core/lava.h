@@ -10,7 +10,7 @@
 // Callback functions to be implemented by platform
 class LavaCallback {
 public:
-    virtual void refresh(uint8_t *framebuffer) = 0;
+    virtual void refresh(const uint8_t *framebuffer) = 0;
     virtual void exit(uint32_t code) = 0;
 
     // Keyboard operations
@@ -90,8 +90,8 @@ public:
     const std::vector<uint8_t> &inspectRam() {return proc.inspectRam();}
 
     LavaDisp::mode_t getGraphicMode() {return disp.getMode();}
-    uint8_t *getFramebuffer() {return disp.getFramebuffer();}
-    uint8_t *getWorkingFramebuffer() {return disp.getWorkingFramebuffer();}
+    const uint8_t *getFramebuffer() {return disp.getFramebuffer();}
+    const uint8_t *getWorkingFramebuffer() {return disp.getWorkingFramebuffer();}
     uint16_t getFramebufferWidth() {return disp.getFramebufferWidth();}
     uint16_t getFramebufferHeight() {return disp.getFramebufferHeight();}
     uint16_t getFramebufferStride() {return disp.getFramebufferStride();}

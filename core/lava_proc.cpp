@@ -20,7 +20,6 @@
 #endif
 
 
-
 void LavaProc::load(const std::vector<uint8_t> &source, uint32_t rambits, bool pen_input)
 {
     this->source = source;
@@ -681,7 +680,7 @@ void LavaProc::lava_op_exit(uint32_t ds0)
 
 void LavaProc::lava_op_clearscreen()
 {
-    disp->clearActive();
+    disp->clearWorking();
 }
 
 uint32_t LavaProc::lava_op_rand()

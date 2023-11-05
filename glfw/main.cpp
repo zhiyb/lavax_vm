@@ -52,7 +52,7 @@ public:
     virtual int32_t inKey();
     virtual void releaseKey(uint8_t key);
 
-    virtual void refresh(uint8_t *framebuffer);
+    virtual void refresh(const uint8_t *framebuffer);
 
     virtual uint8_t fopen(std::string path, std::string mode);
     virtual void fclose(uint8_t fd);
@@ -139,9 +139,9 @@ void lava_dump()
     std::ofstream f_fb_dump;
     f_fb_dump.open("fb.bin", std::ios::binary | std::ios::out);
     f_fb_dump.write(reinterpret_cast<const char *>(lava.getFramebuffer()),
-                    LAVA_MAX_HEIGHT * LAVA_MAX_WIDTH);
+                    lava.getFramebufferStride() * lava.getFramebufferHeight());
     f_fb_dump.write(reinterpret_cast<const char *>(lava.getWorkingFramebuffer()),
-                    LAVA_MAX_HEIGHT * LAVA_MAX_WIDTH);
+                    lava.getFramebufferStride() * lava.getFramebufferHeight());
     f_fb_dump.close();
     std::cerr << "FB dump: fb.bin" << std::endl;
 
@@ -320,13 +320,19 @@ static uint8_t keycode_conv(int key)
 
 void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods)
 {
-    uint8_t k = keycode_conv(key);
-    if (k == 0)
-        return;
     if (action == GLFW_PRESS) {
+        uint8_t k = keycode_conv(key);
+        if (key == GLFW_KEY_DELETE)
+            lava_reset();
+        if (k == 0)
+            return;
         lava_state.key_seq.push(k);
         lava_state.key_state.insert(k);
+
     } else if (action == GLFW_RELEASE) {
+        uint8_t k = keycode_conv(key);
+        if (k == 0)
+            return;
         lava_state.key_state.erase(k);
     }
 }
@@ -693,7 +699,7 @@ void main()
     gl_data.refresh = true;
 }
 
-void Callback::refresh(uint8_t *framebuffer)
+void Callback::refresh(const uint8_t *framebuffer)
 {
     if (lava.getGraphicMode() != gl_data.mode) {
         gl_data.mode = lava.getGraphicMode();
@@ -785,7 +791,7 @@ int main(int argc, char *argv[])
     uint32_t w = lava.getFramebufferWidth();
     uint32_t h = lava.getFramebufferHeight();
     uint32_t s = std::max(1u, std::min(scnw / w / 2, scnh / h / 2));
-	GLFWwindow *window = glfwCreateWindow(w * s, h * s, "lava_glut", nullptr, nullptr);
+	GLFWwindow *window = glfwCreateWindow(w * s, h * s, "lava_glfw", nullptr, nullptr);
     gl_data.window = window;
 	if (!window) {
 		std::cerr << "Cannot create glfw Window" << std::endl;
@@ -820,7 +826,12 @@ int main(int argc, char *argv[])
 
 	while (!glfwWindowShouldClose(window)) {
         double time = glfwGetTime();
-        lava_loop();
+        try {
+            lava_loop();
+        } catch (const std::exception &e) {
+            std::cerr << e.what() << std::endl;
+            return 1;
+        }
 
         if (time - js_polling >= js_polling_rate) {
             js_polling = time;

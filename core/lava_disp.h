@@ -17,7 +17,7 @@ public:
         Graphic256     = 8,
     };
 
-    void setSize(uint16_t w, uint16_t h) {width = w; height = h;}
+    void setSize(uint16_t w, uint16_t h);
     void setMode(mode_t mode);
     mode_t getMode() {return graphic_mode;}
 
@@ -29,7 +29,7 @@ public:
     }
 
     void clearScreen();
-    void clearActive();
+    void clearWorking();
 
     // Draw solid rectangle block
     void drawBlock(int16_t x0, int16_t x1, int16_t y0, int16_t y1, uint8_t cfg);
@@ -49,12 +49,12 @@ public:
     void setForegroundColour(uint8_t c) {fg_colour = c & colour_mask;}
     void setBackgroundColour(uint8_t c) {bg_colour = c & colour_mask;}
 
-    uint8_t *getFramebuffer() {return &framebuffer[1 - fb_active][0][0];}
-    uint8_t *getWorkingFramebuffer() {return &framebuffer[fb_active][0][0];}
+    const uint8_t *getFramebuffer() {return fbData(false, 0, 0);}
+    const uint8_t *getWorkingFramebuffer() {return fbData(true, 0, 0);}
     void framebufferFlush();
     uint16_t getFramebufferWidth() {return width;}
     uint16_t getFramebufferHeight() {return height;}
-    uint16_t getFramebufferStride() {return LAVA_MAX_WIDTH;}
+    uint16_t getFramebufferStride() {return width;}
 
 private:
     // Draw a horizontal line
@@ -70,12 +70,16 @@ private:
     void framebufferFill(uint8_t c);
     void framebufferClear();
 
-    bool in_range(int32_t x, int32_t y) {return x >= 0 && y >= 0 && x < width && y < height;}
+    uint8_t *fbData(bool working, int y, int x)
+    {
+        return working ? &fb_working[y * width + x] : &fb_disp[y * width + x];
+    }
+
+    bool inRange(int32_t x, int32_t y) {return x >= 0 && y >= 0 && x < width && y < height;}
 
     std::vector<uint8_t> lvm_data;
+    std::vector<uint8_t> fb_disp, fb_working;
 
-    uint8_t framebuffer[2][LAVA_MAX_HEIGHT][LAVA_MAX_WIDTH];
-    uint32_t fb_active;     // Current working buffer
     uint16_t width, height;
     mode_t graphic_mode;
     uint8_t fg_colour, bg_colour, colour_mask;

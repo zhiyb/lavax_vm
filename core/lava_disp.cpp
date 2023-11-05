@@ -20,12 +20,20 @@ enum lvm_data_offset_t {
 LavaDisp::LavaDisp()
 {
     graphic_mode = GraphicMono;
-    fb_active = 0;
     refresh = 0;
 
     bg_colour = 0;
     fg_colour = 0;
+    setSize(LAVA_MAX_WIDTH, LAVA_MAX_HEIGHT);
     clearScreen();
+}
+
+void LavaDisp::setSize(uint16_t w, uint16_t h)
+{
+    width = w;
+    height = h;
+    fb_disp.resize(w * h);
+    fb_working.resize(w * h);
 }
 
 void LavaDisp::setMode(mode_t mode)
@@ -49,15 +57,13 @@ void LavaDisp::setMode(mode_t mode)
 
 void LavaDisp::clearScreen()
 {
-    clearActive();
+    clearWorking();
     framebufferFlush();
 }
 
-void LavaDisp::clearActive()
+void LavaDisp::clearWorking()
 {
-    uint8_t fb = fb_active;
-    for (uint32_t y = 0; y < height; y++)
-        std::fill(&framebuffer[fb][y][0], &framebuffer[fb][y][width], bg_colour);
+    std::fill(fb_working.begin(), fb_working.end(), bg_colour);
 }
 
 void LavaDisp::drawHLine(int16_t x, int16_t y, uint16_t w, uint8_t cfg)
@@ -79,22 +85,22 @@ void LavaDisp::drawHLine(int16_t x, int16_t y, uint16_t w, uint8_t cfg)
     uint8_t no_buf = cfg & 0x40;
     uint8_t cmd    = cfg & 0x03;
 
-    uint8_t fb = no_buf ? 1 - fb_active : fb_active;
+    bool fb = no_buf ? false : true;
     switch (cmd) {
     case 0: // Fill with background colour
-        std::fill(&framebuffer[fb][y][x],
-                  &framebuffer[fb][y][x + ww],
+        std::fill(fbData(fb, y, x),
+                  fbData(fb, y, x + ww),
                   bg_colour);
         break;
     case 1: // Fill with foreground colour
-        std::fill(&framebuffer[fb][y][x],
-                  &framebuffer[fb][y][x + ww],
+        std::fill(fbData(fb, y, x),
+                  fbData(fb, y, x + ww),
                   fg_colour);
         break;
     case 2: // Invert colours
-        std::transform(&framebuffer[fb][y][x],
-                       &framebuffer[fb][y][x + ww],
-                       &framebuffer[fb][y][x],
+        std::transform(fbData(fb, y, x),
+                       fbData(fb, y, x + ww),
+                       fbData(fb, y, x),
                        [=](uint8_t c) {return c ^ colour_mask;});
         break;
     default:
@@ -126,13 +132,13 @@ void LavaDisp::drawVLine(int16_t x, int16_t y, uint16_t h, uint8_t cfg)
     uint8_t cmd    = cfg & 0x03;
 
     uint8_t c = cmd == 0 ? bg_colour : fg_colour;
-    uint8_t fb = no_buf ? 1 - fb_active : fb_active;
+    bool fb = no_buf ? false : true;
     if (cmd == 2) {
         for (int dy = 0; dy < hh; dy++)
-            framebuffer[fb][y + dy][x] ^= colour_mask;
+            *fbData(fb, y + dy, x) ^= colour_mask;
     } else {
         for (int dy = 0; dy < hh; dy++)
-            framebuffer[fb][y + dy][x] = c;
+            *fbData(fb, y + dy, x) = c;
     }
 
     if (no_buf)
@@ -185,15 +191,15 @@ void LavaDisp::drawBlock(int16_t x, int16_t y, uint16_t w, uint16_t h, uint8_t c
     uint8_t inv  = cmd & 0x08 ? mask : 0;
 
     // Draw to frame buffer
-    uint8_t fb = no_buf ? 1 - fb_active : fb_active;
+    bool fb = no_buf ? false : true;
     uint32_t ofs = 0;
     for (uint32_t dy = 0; dy < h; dy++) {
         for (uint32_t dx = 0; dx < w; dx++) {
             int32_t xx = x + (hflip ? w - 1 - dx : dx);
             int32_t yy = y + dy;
-            if (in_range(xx, yy)) {
+            if (inRange(xx, yy)) {
                 uint8_t cptn = ((data[ofs / 8] >> (8 - bits - (ofs % 8))) & mask) ^ inv;
-                uint8_t &cfb = framebuffer[fb][yy][xx];
+                uint8_t &cfb = *fbData(fb, yy, xx);
                 cfb = func(cfb, cptn);
             }
             ofs += bits;
@@ -227,16 +233,16 @@ void LavaDisp::drawBlockMono(int16_t x, int16_t y, uint16_t w, uint16_t h, uint8
     uint8_t inv  = (cmd == 2) || (cmd & 0x08) ? colour_mask : 0;
 
     // Draw to frame buffer
-    uint8_t fb = no_buf ? 1 - fb_active : fb_active;
+    bool fb = no_buf ? false : true;
     uint32_t ofs = 0;
     for (uint32_t dy = 0; dy < h; dy++) {
         for (uint32_t dx = 0; dx < w; dx++) {
             int32_t xx = x + (hflip ? w - 1 - dx : dx);
             int32_t yy = y + dy;
-            if (in_range(xx, yy)) {
+            if (inRange(xx, yy)) {
                 uint8_t v = data[ofs / 8] & (0x80 >> (ofs % 8)) ? fg_colour : bg_colour;
                 v = v ^ inv;
-                framebuffer[fb][yy][xx] = v;
+                *fbData(fb, yy, xx) = v;
             }
             ofs += 1;
         }
@@ -336,59 +342,65 @@ void LavaDisp::drawCharacter(uint16_t c, int16_t x, int16_t y, uint8_t cfg)
 
     // Draw graphic block
     uint32_t size = h * ((w + 7) / 8);
+    if (lvm_data.size() < offset + size) {
+        std::cerr << "Error: Font offset out of range" << std::endl;
+        return;
+    }
     std::vector<uint8_t> data(lvm_data.cbegin() + offset, lvm_data.cbegin() + offset + size);
     drawBlockMono(x, y, w, h, cfg, data);
 }
 
 void LavaDisp::xdraw(uint8_t cmd)
 {
-    uint8_t fb = fb_active;
+    bool fb = true;
 
     if (cmd == 0) {
         // Move 1 pixel to the left
         for (uint32_t y = 0; y < width; y++) {
-            std::move(&framebuffer[fb][y][1], &framebuffer[fb][y][width], &framebuffer[fb][y][0]);
-            framebuffer[fb][y][width - 1] = bg_colour;
+            std::move(fbData(fb, y, 1), fbData(fb, y, width), fbData(fb, y, 0));
+            *fbData(fb, y, width - 1) = bg_colour;
         }
 
     } else if (cmd == 1) {
         // Move 1 pixel to the right
         for (uint32_t y = 0; y < width; y++) {
-            std::move(&framebuffer[fb][y][0], &framebuffer[fb][y][width - 1], &framebuffer[fb][y][1]);
-            framebuffer[fb][y][0] = bg_colour;
+            std::move(fbData(fb, y, 0), fbData(fb, y, width - 1), fbData(fb, y, 1));
+            *fbData(fb, y, 0) = bg_colour;
         }
 
     } else if (cmd == 2) {
         // Move 1 line to the top
         for (uint32_t y = 0; y < width - 1; y++)
-            std::move(&framebuffer[fb][y + 1][0], &framebuffer[fb][y + 1][width], &framebuffer[fb][y][0]);
+            std::move(fbData(fb, y + 1, 0), fbData(fb, y + 1, width), fbData(fb, y, 0));
         uint32_t y = width - 1;
-        std::fill(&framebuffer[fb][y][0], &framebuffer[fb][y][width], bg_colour);
+        std::fill(fbData(fb, y, 0), fbData(fb, y, width), bg_colour);
 
     } else if (cmd == 3) {
         // Move 1 line to the bottom
         for (int32_t y = width - 2; y >= 0; y--)
-            std::move(&framebuffer[fb][y][0], &framebuffer[fb][y][width], &framebuffer[fb][y + 1][0]);
+            std::move(fbData(fb, y, 0), fbData(fb, y, width), fbData(fb, y + 1, 0));
         uint32_t y = 0;
-        std::fill(&framebuffer[fb][y][0], &framebuffer[fb][y][width], bg_colour);
+        std::fill(fbData(fb, y, 0), fbData(fb, y, width), bg_colour);
 
     } else if (cmd == 4) {
         // Horizontal flip
         for (uint32_t y = 0; y < width; y++)
-            std::reverse(&framebuffer[fb][y][0], &framebuffer[fb][y][width]);
+            std::reverse(fbData(fb, y, 0), fbData(fb, y, width));
 
     } else if (cmd == 5) {
         // Vertical flip
         for (uint32_t y = 0; y < width / 2; y++)
-            std::swap_ranges(&framebuffer[fb][y][0], &framebuffer[fb][y][width],
-                             &framebuffer[fb][width - 1 - y][0]);
+            std::swap_ranges(fbData(fb, y, 0), fbData(fb, y, width),
+                             fbData(fb, width - 1 - y, 0));
 
     } else if (cmd == 6) {
         // Copy display buffer to working buffer
-        std::copy(&framebuffer[1 - fb][0][0],
-                  &framebuffer[1 - fb][0][0] + sizeof(framebuffer[0]),
-                  &framebuffer[fb][0][0]);
-
+        fb_working = fb_disp;
+#if 0
+        std::copy(fbData(1 - fb, 0, 0),
+                  fbData(1 - fb, 0, 0) + fb_working.size(),
+                  fbData(fb, 0, 0));
+#endif
     }
 }
 
@@ -410,7 +422,7 @@ std::vector<uint8_t> LavaDisp::getBlock(uint16_t x, uint16_t y, uint16_t w, uint
 
     // Active working frame buffer
     bool no_buf = cfg & 0x40;
-    const uint32_t fb = no_buf ? 1 - fb_active : fb_active;
+    bool fb = no_buf ? false : true;
 
     uint8_t bits = graphic_mode;
     uint32_t ofs = 0;
@@ -418,7 +430,7 @@ std::vector<uint8_t> LavaDisp::getBlock(uint16_t x, uint16_t y, uint16_t w, uint
         uint8_t v = 0;
         for (uint32_t dx = 0; dx < w; dx++) {
             v <<= bits;
-            v |= framebuffer[fb][y + dy][x + dx];
+            v |= *fbData(fb, y + dy, x + dx);
             ofs += bits;
             if (ofs % 8 == 0) {
                 data.push_back(v);
@@ -432,8 +444,7 @@ std::vector<uint8_t> LavaDisp::getBlock(uint16_t x, uint16_t y, uint16_t w, uint
 
 void LavaDisp::framebufferFlush()
 {
-    std::copy(&framebuffer[fb_active][0][0],
-              &framebuffer[fb_active][0][0] + sizeof(framebuffer[0]),
-              &framebuffer[1 - fb_active][0][0]);
+    //std::copy(fb_working.cbegin(), fb_working.cend(), fb_disp.begin());
+    fb_disp = fb_working;
     refresh = 1;
 }
