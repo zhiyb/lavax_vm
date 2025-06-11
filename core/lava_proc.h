@@ -99,5 +99,6 @@ private:
     uint32_t flagv;     // Flag value for conditional jumps
     int32_t seed;
 
+    bool refresh_req = false;
     bool debug_break = false;
 };

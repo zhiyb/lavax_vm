@@ -79,6 +79,7 @@ void LavaProc::reset()
     ram.init(rambits);
     pc = 16;
     cb_func.func = nullptr;
+    refresh_req = true;
 }
 
 void LavaProc::run()
@@ -130,8 +131,10 @@ void LavaProc::run()
     trigger_p = trigger;
 #endif
 
-    if (disp->refreshRequest())
+    // Only request display refresh when host operation is needed
+    if (refresh_req && disp->refreshRequest())
         cb->refresh(disp->getFramebuffer());
+    refresh_req = false;
 }
 
 void LavaProc::saveState(std::ostream &ss)
@@ -229,6 +232,8 @@ void LavaProc::restoreState(std::istream &ss)
         else
             std::cerr << "Failed to restore file state: " << path << std::endl;
     }
+
+    refresh_req = true;
 }
 
 #include "lava_op_code.h"
@@ -699,6 +704,7 @@ uint32_t LavaProc::lava_op_getchar()
 {
     cb_func.func = std::bind(&LavaCallback::getchar, cb);
     cb_func.stack = true;
+    refresh_req = true;
     return 0;
 }
 
@@ -730,6 +736,7 @@ void LavaProc::lava_op_delay(uint32_t ds0)
 {
     cb_func.func = std::bind(&LavaCallback::delayMs, cb, ds0);
     cb_func.stack = false;
+    refresh_req = true;
 }
 
 void LavaProc::lava_op_writeblock(uint32_t ds0, uint32_t ds1, uint32_t ds2, uint32_t ds3, uint32_t ds4, uint32_t ds5)
@@ -761,6 +768,9 @@ void LavaProc::lava_op_writeblock(uint32_t ds0, uint32_t ds1, uint32_t ds2, uint
 void LavaProc::lava_op_fbflush()
 {
     disp->framebufferFlush();
+#if LAVA_REFRESH_AT_FLUSH
+    refresh_req = true;
+#endif
 }
 
 void LavaProc::lava_op_textout(uint32_t ds0, uint32_t ds1, uint32_t ds2, uint32_t ds3)
@@ -796,6 +806,7 @@ void LavaProc::lava_op_rectangle(uint32_t ds0, uint32_t ds1, uint32_t ds2, uint3
 
 void LavaProc::lava_op_exit(uint32_t ds0)
 {
+    refresh_req = true;
     cb->exit(ds0);
 }
 
@@ -839,6 +850,7 @@ void LavaProc::lava_op_locate(uint32_t ds0, uint32_t ds1)
 
 uint32_t LavaProc::lava_op_inkey()
 {
+    refresh_req = true;
     return cb->inKey();
 }
 
@@ -1016,7 +1028,7 @@ uint32_t LavaProc::lava_op_deletefile(uint32_t ds0)
 
 uint32_t LavaProc::lava_op_crc16(uint32_t ds0, uint32_t ds1)
 {
-    static uint8_t crc1[256]={
+    static const uint8_t crc1[256]={
         0x0,0x21,0x42,0x63,0x84,0xa5,0xc6,0xe7,
         0x8,0x29,0x4a,0x6b,0x8c,0xad,0xce,0xef,
         0x31,0x10,0x73,0x52,0xb5,0x94,0xf7,0xd6,
@@ -1050,7 +1062,7 @@ uint32_t LavaProc::lava_op_crc16(uint32_t ds0, uint32_t ds1)
         0x1f,0x3e,0x5d,0x7c,0x9b,0xba,0xd9,0xf8,
         0x17,0x36,0x55,0x74,0x93,0xb2,0xd1,0xf0
     };
-    static uint8_t crc2[256]={
+    static const uint8_t crc2[256]={
         0x0,0x10,0x20,0x30,0x40,0x50,0x60,0x70,
         0x81,0x91,0xa1,0xb1,0xc1,0xd1,0xe1,0xf1,
         0x12,0x2,0x32,0x22,0x52,0x42,0x72,0x62,
@@ -1147,11 +1159,13 @@ uint32_t LavaProc::lava_op_gettick()
 
 uint32_t LavaProc::lava_op_checkkey(uint32_t ds0)
 {
+    refresh_req = true;
     return cb->checkKey(ds0);
 }
 
 void LavaProc::lava_op_releasekey(uint32_t ds0)
 {
+    refresh_req = true;
     cb->releaseKey(ds0);
 }
 

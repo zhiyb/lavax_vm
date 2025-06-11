@@ -69,18 +69,20 @@ public:
     };
 
     enum key_t {
-        KeyUp    = 20,
-        KeyDown  = 21,
-        KeyRight = 22,
-        KeyLeft  = 23,
-        KeyF1    = 28,
-        KeyF2    = 29,
-        KeyF3    = 30,
-        KeyF4    = 31,
-        KeyEnter = 13,
-        KeySpace = 20,
-        KeyHelp  = 25,
-        KeyEsc   = 27,
+        KeyEnter    = 13,
+        KeyPageDown = 14,
+        KeyPageUp   = 19,
+        KeyUp       = 20,
+        KeyDown     = 21,
+        KeyRight    = 22,
+        KeyLeft     = 23,
+        KeyHelp     = 25,
+        KeyEsc      = 27,
+        KeyF1       = 28,
+        KeyF2       = 29,
+        KeyF3       = 30,
+        KeyF4       = 31,
+        KeySpace    = ' ',
     };
 
     Lava();

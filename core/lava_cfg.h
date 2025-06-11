@@ -9,3 +9,7 @@
 #define LAVA_STACK_OFFSET   0x1b00
 #define LAVA_STRING_OFFSET  0x1c00
 #define LAVA_STRING_LIMIT   768
+
+// When set to 0, screen refresh is only requested
+// when waiting for user input or delay
+#define LAVA_REFRESH_AT_FLUSH 0
