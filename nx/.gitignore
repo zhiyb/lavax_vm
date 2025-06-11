@@ -1,0 +1,9 @@
+build/
+*.elf
+*.lst
+*.nro
+*.nacp
+
+.vscode/
+romfs/
+*.sh
