@@ -12,12 +12,16 @@ void Lava::load(const std::vector<uint8_t> &source)
 {
     // Check 16-byte file header
     const uint8_t *header = source.data();
-    if (source.size() < 16)
-        throw std::runtime_error("File too short");
+    if (source.size() < 16) {
+        std::cerr << "File too short" << std::endl;
+        return;
+    }
 
     // File signature
-    if (!(header[0] == 'L' && header[1] == 'A' && header[2] == 'V' && header[3] == 0x12))
-        throw std::runtime_error("File signature mismatch");
+    if (!(header[0] == 'L' && header[1] == 'A' && header[2] == 'V' && header[3] == 0x12)) {
+        std::cerr << "File signature mismatch" << std::endl;
+        return;
+    }
 
     // Configurations
     uint8_t cfg = header[8];
@@ -36,7 +40,8 @@ void Lava::load(const std::vector<uint8_t> &source)
         rambits = 24;
         break;
     default:
-        throw std::runtime_error("Unknown RAM mode: " + std::to_string(cfg));
+        std::cerr << "Unknown RAM mode: " << std::to_string(cfg) << std::endl;
+        return;
     }
 
     LavaDisp::mode_t gmode;
@@ -51,7 +56,8 @@ void Lava::load(const std::vector<uint8_t> &source)
         gmode = LavaDisp::Graphic256;
         break;
     default:
-        throw std::runtime_error("Unknown graphic mode: " + std::to_string(cfg));
+        std::cerr << "Unknown graphic mode: " << std::to_string(cfg) << std::endl;
+        return;
     }
 
     // Screen size

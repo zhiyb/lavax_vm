@@ -6,7 +6,7 @@
 
 #include "lava_disp.h"
 
-#define TODO(err) throw std::runtime_error(std::string("TODO ") + __FUNCSIG__ + ": " + (err))
+#define TODO(err)   std::cerr << "DISP_TODO:" << __LINE__ << " " << __PRETTY_FUNCTION__ << " " << (err) << std::endl
 
 enum lvm_data_offset_t {
     OffsetAscii     = 0,

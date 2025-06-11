@@ -10,8 +10,8 @@
 
 #define DEBUG_PRINT 0
 
-#define TODO()      throw std::runtime_error(std::string("PROC_TODO:") + std::to_string(__LINE__) + " " + __FUNCSIG__)
-#define PROC_TODO() std::cerr << "PROC_TODO: " << __FUNCSIG__ << std::endl
+#define TODO()      std::cerr << "PROC_TODO:" << __LINE__ << " " << __PRETTY_FUNCTION__ << std::endl
+#define PROC_TODO() std::cerr << "PROC_TODO:" << __LINE__ << " " << __PRETTY_FUNCTION__ << std::endl
 
 #if DEBUG_PRINT
 #define DEBUG_WRAP_PRINT(v) std::cerr << v
@@ -50,8 +50,10 @@ void LavaProc::load(const std::vector<uint8_t> &source, uint32_t rambits, bool p
 uint32_t LavaProc::parse(uint32_t ofs)
 {
     uint8_t opcode = source[ofs];
-    if (op_info.find(opcode) == op_info.cend())
-        throw std::runtime_error("Unknown opcode: " + std::to_string((uint32_t)opcode));
+    if (op_info.find(opcode) == op_info.cend()) {
+        std::cerr << "Unknown opcode: " << opcode << std::endl;
+        return 1;
+    }
     op_info_t info = op_info[opcode];
 
     uint32_t size = info.len & OpParamBaseMask;
